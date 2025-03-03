@@ -14,6 +14,11 @@ export default defineEventHandler(async (event) => {
         return  { message: "Server with name " + server_name + " does not exist" };
     }
 
+    if (server.process) {
+        return { message: "Minecraft server is already running." };
+    }
+
+
     const workingDir = environment.paths.servers + "/" + server.name;
     const jarPath = environment.paths.servers + "/" + server.name + "/server.jar";
 
@@ -33,9 +38,10 @@ export default defineEventHandler(async (event) => {
         });
 
         server.process.on('exit', (code: string) => {
-            console.log(`Minecraft server process exited with code ${code}`);
+            console.log(`Server exit signal from startServer with code ${code}`);
             server.process = null;
-        });
+        })
+
 
         return { message: "Minecraft server started." };
     } catch (error: any) {

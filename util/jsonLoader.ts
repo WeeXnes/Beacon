@@ -12,11 +12,6 @@ export function loadJsonFile(){
         environment.settings = JSON.parse(jsonStr);
 
         checkAllServerDirectories()
-
-
-
-
-
     } catch (error) {
         console.error('Error reading or parsing JSON file:', error);
     }
@@ -27,6 +22,7 @@ export function saveJsonFile() {
     const jsonSettings = JSON.stringify(environment.settings, null, 2);
     fs.writeFileSync(environment.files.settings, jsonSettings);
     console.log(`Settings saved to ` + environment.files.settings);
+    checkAllServerDirectories()
 }
 
 
@@ -67,7 +63,7 @@ export function createPathIfNotExists(dirPath: string) {
 }
 
 
-function checkAllServerDirectories(){
+export function checkAllServerDirectories(){
     environment.settings.servers.forEach(server => {
         createPathIfNotExists(environment.paths.servers + "/" + server.name)
     })

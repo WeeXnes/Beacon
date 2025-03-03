@@ -2,16 +2,21 @@
   <div class="flex flex-col items-center justify-center py-16 px-6">
     <h1 class="text-4xl font-bold text-center mb-6">Minecraft Servers</h1>
     <div class="grid md:grid-cols-3 gap-6 w-full max-w-5xl mb-8">
-      <div v-for="server in settings.servers" class="card bg-base-100 shadow-2xl p-6" @click="editServerDialog(server)">
-        <h2 class="text-xl font-bold text-center">
+      <div v-for="server in settings.servers" class="card bg-base-100 shadow-2xl p-6">
+        <h2 class="text-xl font-bold text-center cursor-pointer" @click="editServerDialog(server)">
           {{ server.name }}
         </h2>
         <div class="mt-2 text-sm">
           <p><strong>Version:</strong> {{ server.version }}</p>
           <p><strong>Port</strong> {{ server.port }}</p>
-          <p><strong>Slots:</strong> {{ server.maxPlayers }}</p>
-          <p><strong>Max Memory:</strong> {{ server.maxMemory }}</p>
+          <p><strong>Memory:</strong> {{ server.minMemory }}-{{ server.maxMemory }}GB</p>
         </div>
+
+        <div class="form-control mt-4 flex flex-row gap-2">
+          <button @click="startServer(server)" class="btn btn-primary w-1/2">Start</button>
+          <button @click="stopServer(server)" class="btn btn-error w-1/2">Stop</button>
+        </div>
+
       </div>
 
       <div class="card bg-base-100 shadow-2xl p-6 cursor-pointer" onclick="addServerModal.showModal()">
@@ -43,12 +48,6 @@
       </label>
       <label class="form-control w-full max-w-xs">
         <div class="label">
-          <span class="label-text">Max Players</span>
-        </div>
-        <input v-model="addDialog.newServer.maxPlayers" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
           <span class="label-text">Version</span>
         </div>
         <input v-model="addDialog.newServer.version" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
@@ -58,34 +57,6 @@
           <span class="label-text">Jar Download URL</span>
         </div>
         <input v-model="addDialog.newServer.jar_url" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text"></span>
-        </div>
-        <div class="dropdown dropdown-bottom dropdown-center">
-          <div tabindex="0" role="button" class="btn m-1">Difficuly: {{addDialog.newServer.difficulty}}</div>
-          <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-            <li @click="setNewServerDifficulty('peaceful')"><a>Peaceful</a></li>
-            <li @click="setNewServerDifficulty('easy')"><a>Easy</a></li>
-            <li @click="setNewServerDifficulty('normal')"><a>Normal</a></li>
-            <li @click="setNewServerDifficulty('hard')"><a>Hard</a></li>
-          </ul>
-        </div>
-
-
-      </label>
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Spawn Protection</span>
-        </div>
-        <input v-model="addDialog.newServer.spawnProtection" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Render Distance</span>
-        </div>
-        <input v-model="addDialog.newServer.viewDistance" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
       </label>
 
 
@@ -113,19 +84,21 @@
     </div>
   </dialog>
 
-  <dialog id="editServerModal" class="modal">
+
+
+
+
+  <input type="checkbox" id="editServerModal" class="modal-toggle" />
+  <div class="modal" role="dialog">
     <div class="modal-box w-11/12 max-w-5xl">
-      <h3 class="text-lg font-bold">{{ editDialog.editedServer.name }}</h3>
-      <p class="py-4"> blablabla </p>
-      <div class="modal-action">
-        <form method="dialog">
-          <!-- if there is a button, it will close the modal -->
-          <button @click="deleteServer" class="btn">Delete</button>
-          <button @click="startServer" class="btn">Save Changes</button>
-        </form>
+      <h3 class="text-lg font-bold text-center">{{ editDialog.editedServer.name }}</h3>
+      <div class="mockup-code w-full">
+        <pre v-for="str in testrec.logs" data-prefix="$"><code>{{str}}</code></pre>
       </div>
     </div>
-  </dialog>
+    <label class="modal-backdrop" for="editServerModal">Close</label>
+  </div>
+
 
 
 </template>
@@ -138,6 +111,10 @@
 import type {MinecraftServer} from "~/types/MinecraftServer";
 import axios from 'axios';
 
+
+const testrec = reactive({
+  logs: [] as string[],
+})
 
 const settings = reactive({
   servers: [] as MinecraftServer[],
@@ -164,16 +141,41 @@ const getServers = async () => {
 }
 
 
+
+const getLogs = async () => {
+  // @ts-ignore
+  if(!editServerModal.checked)
+    return
+
+  try{
+    const response = await axios.post('/api/getLogs', {
+      name: editDialog.editedServer.name
+    });
+    //console.log(response)
+    const strRet: string = response.data.logs;
+    const stringArray = strRet.split('\n');
+    //console.log(stringArray);
+    testrec.logs.length = 0;
+    stringArray.slice(-20).forEach(element => {
+      testrec.logs.push(element);
+    })
+  }catch(error){
+    console.error(`Error fetch: ${error}`);
+  }
+}
+
+
 const editServerDialog = async (server: MinecraftServer) => {
   editDialog.editedServer = server
+
   // @ts-ignore
-  editServerModal.showModal()
+  //editServerModal.showModal()
+  editServerModal.checked = true
 }
 
 
 const addServer = async () => {
   if(!settings.servers.some(server => server.name === addDialog.newServer.name)){
-    addDialog.newServer.logs = ["Server Created via Webui"]
     settings.servers.push(addDialog.newServer)
     await syncServers()
   }
@@ -185,9 +187,7 @@ const deleteServer = async () => {
   await syncServers()
 }
 
-const setNewServerDifficulty = async (newDiff: "peaceful" | "easy" | "normal" | "hard") => {
-  addDialog.newServer.difficulty = newDiff;
-}
+
 
 const syncServers = async () => {
   try {
@@ -201,10 +201,21 @@ const syncServers = async () => {
 };
 
 
-const startServer = async () => {
+const startServer = async (server: MinecraftServer) => {
   try {
     const response = await axios.post('/api/startServer', {
-      name: editDialog.editedServer.name
+      name: server.name
+    });
+    console.log(response.data);
+  } catch (error) {
+    console.error(`Error `, error);
+  }
+};
+
+const stopServer = async (server: MinecraftServer) => {
+  try {
+    const response = await axios.post('/api/stopServer', {
+      name: server.name
     });
     console.log(response.data);
   } catch (error) {
@@ -214,11 +225,18 @@ const startServer = async () => {
 
 
 
+let intervalId: NodeJS.Timeout;
 
 
 onMounted(async()=>{
   await getServers()
+  intervalId = setInterval(getLogs, 500);
 })
+
+onBeforeUnmount(()=>{
+  clearInterval(intervalId);
+})
+
 
 </script>
 
