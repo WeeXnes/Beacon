@@ -69,13 +69,23 @@ export function checkAllServerDirectories(){
     })
 
     environment.settings.servers.forEach(server => {
-        const destinationPath = environment.paths.servers + "/" + server.name + "/server.jar"
+        const destinationPathJar = environment.paths.servers + "/" + server.name + "/server.jar"
+        const destinationPathEula = environment.paths.servers + "/" + server.name + "/eula.txt"
         try {
-            fs.accessSync(destinationPath);
+            fs.accessSync(destinationPathJar);
             console.log('Settings already exists!');
         } catch (error) {
-            downloadFile(server.jar_url, destinationPath);
+            downloadFile(server.jar_url, destinationPathJar);
         }
+
+        try {
+            fs.accessSync(destinationPathEula);
+            console.log('eula exists');
+        } catch (error) {
+            console.log("setting eula to true")
+            fs.writeFileSync(destinationPathEula, 'eula=true');
+        }
+
     })
 }
 

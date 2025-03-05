@@ -23,13 +23,19 @@ export default defineEventHandler(async (event) => {
     const jarPath = environment.paths.servers + "/" + server.name + "/server.jar";
 
     try {
-        server.process = execa('java', ['-jar', jarPath, 'nogui'], {
+
+        const xmsArg = `-Xms${server.maxMemory}G`
+        const xmxArg = `-Xmx${server.maxMemory}G`
+
+        console.log(`Starting server ${server.name} with ${xmsArg} and ${xmxArg}`);
+
+        server.process = execa('java', [xmsArg, xmxArg, '-jar', jarPath, 'nogui'], {
             cwd: workingDir,
         });
 
         server.process.stdout.on('data', (data: string) => {
             const logData = data.toString();
-            console.log(logData);
+            //console.log(logData);
         });
 
         server.process.stderr.on('data', (data: string) => {

@@ -23,11 +23,16 @@ export default defineEventHandler(async (event) => {
     try {
 
         const data = await fs.readFile(logsPath, 'utf-8');
+        const strippedLogs = data.slice(0, -2);
         return {
             message: `Logs for ${server_name}`,
-            logs: data
+            logs: strippedLogs
         };
     } catch (error: any) {
-        return { message: "Failed to get logs for " + server_name, error: error.message };
+        return {
+            message: "Failed to get logs for " + server_name,
+            logs: "",
+            error: error.message
+        };
     }
 });

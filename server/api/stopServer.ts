@@ -15,10 +15,7 @@ export default defineEventHandler(async (event) => {
     if (!server.process) {
         return { message: "Minecraft server is not running." };
     }
-
-    console.log(server.process)
-
-    console.log("currently contains: " + server.process)
+    
 
     try {
         // Send "stop" command to the server process stdin
