@@ -9,7 +9,7 @@
 
         <div class="mt-2 text-sm">
           <p><strong>Version:</strong> {{ server.version }}</p>
-          <p><strong>Memory:</strong> {{ server.maxMemory }}GB</p>
+          <p><strong>Memory:</strong> {{ server.maxMemory }} GB</p>
         </div>
 
         <div class="form-control mt-4 flex flex-row gap-2">
@@ -48,11 +48,17 @@
         </div>
         <input v-model="addDialog.newServer.version" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
       </label>
+
       <label class="form-control w-full max-w-xs">
         <div class="label">
-          <span class="label-text">Jar Download URL</span>
+          <span class="label-text">Jar File Upload</span>
         </div>
-        <input v-model="addDialog.newServer.jar_url" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
+        <input
+            type="file"
+            accept=".jar"
+            class="file-input file-input-bordered w-full max-w-xs"
+            @change="onFileChange"
+        />
       </label>
 
       <label class="form-control w-full max-w-xs">
@@ -144,7 +150,42 @@
           </div>
           <input v-model="editServerDialog.properties['pvp']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
         </label>
+
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Render Distance</span>
+          </div>
+          <input v-model="editServerDialog.properties['view-distance']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Simulation Distance</span>
+          </div>
+          <input v-model="editServerDialog.properties['simulation-distance']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
+        </label>
+
+
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">Server Banner</span>
+          </div>
+          <input v-model="editServerDialog.properties['motd']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
+        </label>
+
+        <label class="form-control w-full max-w-xs">
+          <div class="label">
+            <span class="label-text">PVP</span>
+          </div>
+          <input v-model="editServerDialog.properties['pvp']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
+        </label>
+
+
       </div>
+
+
 
 
 
@@ -174,14 +215,15 @@
 
 import type {MinecraftServer} from "~/types/MinecraftServer";
 import axios from 'axios';
-import { stringify , parse } from 'ini'
+import {parse, stringify} from 'ini'
 
 const settings = reactive({
   servers: [] as MinecraftServer[],
 })
 
 const addDialog = reactive({
-  newServer: {} as MinecraftServer
+  newServer: {} as MinecraftServer,
+  uploadData: '' as string
 })
 
 const serverLogDialog = reactive({
@@ -240,6 +282,9 @@ const getLogs = async () => {
     console.error(`Error fetch: ${error}`);
   }
 }
+
+
+
 
 const showEditServerDialog = async (server: MinecraftServer) => {
   editServerDialog.selectedServer = server
@@ -302,8 +347,13 @@ const deleteServer = async (server: MinecraftServer) => {
 
 const addServer = async (server: MinecraftServer) => {
   try {
+    const checksum = await calculateChecksum(addDialog.uploadData)
     const response = await axios.post('/api/addServer', {
-      newServer: addDialog.newServer
+      newServer: addDialog.newServer,
+      fileUpload:{
+        data: addDialog.uploadData,
+        checksum: checksum
+      }
     });
     console.log(response.data);
     await getServers()
@@ -311,6 +361,66 @@ const addServer = async (server: MinecraftServer) => {
     console.error(`Error `, error);
   }
 }
+
+
+const onFileChange = async (event: any) => {
+  const file = event.target.files[0];
+  addDialog.newServer.jarName = file.name;
+
+  if (file) {
+    const reader = new FileReader();
+    const readFile = new Promise<ArrayBuffer>((resolve, reject) => {
+      reader.onload = (e) => {
+        resolve(e.target?.result as ArrayBuffer);
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+    });
+    reader.readAsArrayBuffer(file);
+
+    try {
+      const result = await readFile;
+      addDialog.uploadData = arrayBufferToBase64(result);
+    } catch (error) {
+      console.error("Error reading file:", error);
+    }
+  }
+};
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const uint8Array = new Uint8Array(buffer);
+  let binaryString = '';
+
+  uint8Array.forEach((byte) => {
+    binaryString += String.fromCharCode(byte);
+  });
+
+  return btoa(binaryString);
+};
+
+
+
+
+
+
+
+
+const calculateChecksum = async (data: any) => {
+  try {
+    const buffer = data instanceof ArrayBuffer ? data : new TextEncoder().encode(data);
+
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hexString = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+    console.log('Checksum (SHA-256):', hexString);
+    return hexString;
+  } catch (error) {
+    console.error('Error calculating checksum:', error);
+  }
+};
 
 
 

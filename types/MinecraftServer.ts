@@ -3,7 +3,7 @@ import {environment} from "~/core/globals";
 export interface MinecraftServer {
     name: string;
     version: string;
-    jar_url: string;
+    jarName: string;
     maxMemory: number;
     process: any;
 }
@@ -14,7 +14,7 @@ export function getServerDirectory (server: MinecraftServer): string {
 }
 
 export function getJarPath (server: MinecraftServer): string {
-    return environment.paths.servers + "/" + server.name + "/server.jar"
+    return environment.paths.servers + "/" + server.name + "/" + server.jarName
 }
 
 export function getPropertiesPath (server: MinecraftServer): string {
@@ -25,6 +25,6 @@ export function getLogsPath (server: MinecraftServer): string {
     return environment.paths.servers + "/" + server.name + "/logs/latest.log"
 }
 
-export function getServerByName(server_name: string): MinecraftServer | undefined{
+export function getServerByName(server_name: string): MinecraftServer | undefined {
     return environment.settings.servers.find(server => server.name == server_name);
 }

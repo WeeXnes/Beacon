@@ -1,8 +1,8 @@
 import {environment} from "~/core/globals";
 import * as fs from 'fs';
-import * as path from 'path';
 import type {SettingsJsonFile} from "~/types/SettingsJsonFile";
-import * as https from "node:https";
+import type {MinecraftServer} from "~/types/MinecraftServer";
+import {getServerDirectory} from "~/types/MinecraftServer";
 
 export function loadJsonFile(){
     try {
@@ -65,54 +65,22 @@ export function createPathIfNotExists(dirPath: string) {
 
 export function checkAllServerDirectories(){
     environment.settings.servers.forEach(server => {
-        createPathIfNotExists(environment.paths.servers + "/" + server.name)
-    })
-
-    environment.settings.servers.forEach(server => {
-        const destinationPathJar = environment.paths.servers + "/" + server.name + "/server.jar"
-        const destinationPathEula = environment.paths.servers + "/" + server.name + "/eula.txt"
-        try {
-            fs.accessSync(destinationPathJar);
-            console.log('Settings already exists!');
-        } catch (error) {
-            downloadFile(server.jar_url, destinationPathJar);
-        }
-
-        try {
-            fs.accessSync(destinationPathEula);
-            console.log('eula exists');
-        } catch (error) {
-            console.log("setting eula to true")
-            fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
-        }
-
+        createPathIfNotExists(getServerDirectory(server))
+        checkEulaFile(server)
     })
 }
 
 
-function downloadFile(url: string, dest: string) {
-    if(url == "")
-        return;
-
-
-    console.log(dest + ' doesnt exist, downloading now from ' + url);
-    const file = fs.createWriteStream(dest);
-
-    https.get(url, (response) => {
-        if (response.statusCode === 200) {
-            response.pipe(file);
-        } else {
-            console.error(`Failed to download file. Status Code: ${response.statusCode}`);
-        }
-
-        file.on('finish', () => {
-            file.close();
-            console.log('Download complete!');
-        });
-    }).on('error', (err) => {
-        // Handle any errors during the download
-        console.error('Error during download:', err.message);
-        fs.unlink(dest, () => {});
-    });
+export function checkEulaFile(server: MinecraftServer){
+    const destinationPathEula = environment.paths.servers + "/" + server.name + "/eula.txt"
+    try {
+        fs.accessSync(destinationPathEula);
+        console.log('eula exists');
+    } catch (error) {
+        console.log(`Setting eula for ${server.name} to ${environment.settings.eula}`)
+        fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
+    }
 }
+
+
 
