@@ -1,4 +1,4 @@
-import { defineEventHandler, getCookie, createError } from 'h3';
+import { defineEventHandler } from 'h3';
 import {environment} from "~/core/globals";
 
 export default defineEventHandler(async (event) => {

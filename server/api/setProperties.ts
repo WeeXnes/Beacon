@@ -1,8 +1,5 @@
-import {environment} from "~/core/globals";
-import { defineEventHandler, getCookie, createError } from 'h3';
-import {saveJsonFile} from "~/util/jsonLoader";
-import {getPropertiesPath, getServerByName, MinecraftServer} from "~/types/MinecraftServer";
-import {execa} from "execa";
+import { defineEventHandler } from 'h3';
+import {getPropertiesPath, getServerByName} from "~/types/MinecraftServer";
 import * as fs from 'fs/promises';
 
 

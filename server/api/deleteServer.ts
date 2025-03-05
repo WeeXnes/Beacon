@@ -1,4 +1,3 @@
-import {environment} from "~/core/globals";
 import {removeServerByName, saveJsonFile} from "~/util/jsonLoader";
 import * as fs from 'fs/promises';
 import {getServerByName, getServerDirectory} from "~/types/MinecraftServer";

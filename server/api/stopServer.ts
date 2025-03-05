@@ -1,5 +1,3 @@
-import { environment } from "~/core/globals";
-import { execa } from "execa";
 import {getServerByName} from "~/types/MinecraftServer";
 
 export default defineEventHandler(async (event) => {

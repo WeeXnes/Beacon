@@ -1,4 +1,4 @@
-import {getServerByName, getServerDirectory} from "~/types/MinecraftServer";
+import {getServerByName} from "~/types/MinecraftServer";
 import {environment} from "~/core/globals";
 import {saveJsonFile} from "~/util/jsonLoader";
 
