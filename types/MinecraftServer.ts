@@ -1,4 +1,3 @@
-import type {ResultPromise} from "execa";
 import {environment} from "~/core/globals";
 
 export interface MinecraftServer {
@@ -20,4 +19,12 @@ export function getJarPath (server: MinecraftServer): string {
 
 export function getPropertiesPath (server: MinecraftServer): string {
     return environment.paths.servers + "/" + server.name + "/server.properties"
+}
+
+export function getLogsPath (server: MinecraftServer): string {
+    return environment.paths.servers + "/" + server.name + "/logs/latest.log"
+}
+
+export function getServerByName(server_name: string): MinecraftServer | undefined{
+    return environment.settings.servers.find(server => server.name == server_name);
 }

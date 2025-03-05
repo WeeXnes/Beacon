@@ -156,7 +156,7 @@
 
         <!-- Delete Button -->
         <form method="dialog">
-          <button class="btn btn-error" @click="deleteServer(editServerDialog)">Delete</button>
+          <button class="btn btn-error" @click="deleteServer(editServerDialog.selectedServer)">Delete</button>
         </form>
       </div>
 
@@ -230,14 +230,8 @@ const getLogs = async () => {
     const response = await axios.post('/api/getLogs', {
       name: serverLogDialog.selectedServer.name
     });
-
-    console.log(response.data.message)
-    //console.log(response)
     const strRet = response.data.logs;
-
-
     const stringArray = strRet.split('\n');
-    //console.log(stringArray);
     serverLogDialog.logs.length = 0;
     stringArray.slice(-20).forEach((element: string) => {
       serverLogDialog.logs.push(element);
@@ -278,12 +272,6 @@ const getProperties = async () => {
 
 
 
-const addServer = async () => {
-  if (!settings.servers.some(server => server.name === addDialog.newServer.name)) {
-    settings.servers.push({ ...addDialog.newServer });
-    await syncServers();
-  }
-}
 
 
 
@@ -312,17 +300,19 @@ const deleteServer = async (server: MinecraftServer) => {
   }
 }
 
-const syncServers = async () => {
+const addServer = async (server: MinecraftServer) => {
   try {
-    const response = await axios.post('/api/setServers', {
-      serverList: settings.servers
+    const response = await axios.post('/api/addServer', {
+      newServer: addDialog.newServer
     });
     console.log(response.data);
-
+    await getServers()
   } catch (error) {
     console.error(`Error `, error);
   }
-};
+}
+
+
 
 
 const startServer = async (server: MinecraftServer) => {

@@ -83,7 +83,7 @@ export function checkAllServerDirectories(){
             console.log('eula exists');
         } catch (error) {
             console.log("setting eula to true")
-            fs.writeFileSync(destinationPathEula, 'eula=true');
+            fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
         }
 
     })
