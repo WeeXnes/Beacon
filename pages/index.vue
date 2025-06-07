@@ -462,6 +462,11 @@ onBeforeUnmount(()=>{
 })
 
 
+definePageMeta({
+  middleware: 'auth'
+})
+
+
 </script>
 
 

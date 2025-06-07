@@ -41,7 +41,7 @@ function createEmptySettingsIfNotExists() {
     } catch (error) {
         console.log('Settings does not exist, creating an empty Settings-file...');
         let emptySettings: SettingsJsonFile = ({
-            eula: false,
+            eula: true,
             servers:[]
         });
         const jsonSettings = JSON.stringify(emptySettings, null, 2);
