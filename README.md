@@ -41,7 +41,7 @@ A sleek and modern Minecraft server manager built with [Nuxt](https://nuxt.com) 
 - **Frontend**: [Nuxt 3](https://nuxt.com) + [Tailwind CSS](https://tailwindcss.com)
 - **Backend**: Node.js via Nuxt server routes (for serving the panel and handling server commands)
 - **Real-Time Console**: Filesystem polling of `logs/latest.log` (no need for RCON or WebSockets)
-- **Minecraft Integration**: Designed for [PaperMC](https://papermc.io/) or compatible server JARs (like Spigot or Bukkit)
+- **Minecraft Integration**: Designed for Vanilla- or Plugin-Server JARs (like Spigot or Bukkit)
 
 ## 📦 Getting Started
 
