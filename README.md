@@ -1,75 +1,88 @@
-# Nuxt Minimal Starter
+# 🌐 Minecraft Server Panel
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A sleek and modern Minecraft server manager built with [Nuxt](https://nuxt.com) for ease of use. Features include live console output via log polling, full server configuration, and intuitive control — all from your browser.
 
-## Setup
+<p align="center">
+  <img src="./img/screen1.png" alt="Dashboard View" width="45%" />
+  <img src="./img/screen3.png" alt="Edit Server View" width="45%" />
+</p>
 
-Make sure to install dependencies:
+## 🚀 Features
+
+- 🖥️ **Manage Multiple Servers**  
+  Add, edit, start, and stop Minecraft servers through a modern web interface.
+
+- 🎮 **Server Configuration**  
+  Configure difficulty, game mode, max players, render/simulation distance, PVP toggle, command blocks, and more.
+
+- 📡 **Live Console Output**  
+  Real-time output is streamed by polling the `logs/latest.log` file — no need for RCON or WebSockets.
+
+- 🔐 **Password-Protected Admin Access**  
+  Protect access to the panel using a configurable admin password.
+
+- 🧭 **Modern UI/UX**  
+  Fully responsive dark interface designed with Tailwind CSS and Nuxt 3.
+
+- 💾 **Persistent Settings**  
+  All server configurations are saved and restored between sessions.
+
+## ⚙️ Server Configuration Options
+
+- **Difficulty**: `peaceful`, `easy`, `normal`, `hard`
+- **Game Mode**: `survival`, `creative`, `adventure`, `spectator`
+- **Slots**: Max player count
+- **Render Distance** & **Simulation Distance**: In chunks
+- **Booleans**: Enable/disable PVP, command blocks, etc.
+- **Extras**: Upload a custom server banner image
+
+## 🧪 Tech Stack
+
+- **Frontend**: [Nuxt 3](https://nuxt.com) + [Tailwind CSS](https://tailwindcss.com)
+- **Backend**: Node.js via Nuxt server routes (for serving the panel and handling server commands)
+- **Real-Time Console**: Filesystem polling of `logs/latest.log` (no need for RCON or WebSockets)
+- **Minecraft Integration**: Designed for [PaperMC](https://papermc.io/) or compatible server JARs (like Spigot or Bukkit)
+
+## 📦 Getting Started
+
+### Prerequisites
+
+- **Node.js** ≥ 16
+- **Java 17+** (for running Minecraft)
+- **Minecraft server JAR** (e.g. `paper-1.20.6.jar`)
+- **PM2** for process management (optional but recommended)
+
+
+### Installation
 
 ```bash
-# npm
+git clone https://git.weexnes.dev/WeeXnes/minecraft_server_manager.git
+cd minecraft_server_manager
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
+#### Development Mode
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
+#### 🔐 Admin Password Setup
+By default, the admin password is: `admin`
 
-## Production
-
-Build the application for production:
-
+You can set a custom admin password using the following command:
 ```bash
-# npm
+npm run password_gen <your_password>
+```
+This securely stores the hashed password in `panel.config.ts` so it can be used for login.
+
+### 🚀 Production Mode (PM2)
+1. Build the app:
+```bash
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
-
-Locally preview production build:
-
+2. Start it with PM2:
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+pm2 start
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+This uses the configuration in `ecosystem.config.js` to launch the Nuxt server from the build output.
+### 🔒 Security
+This panel is intended for local or LAN use If hosting publicly:
+- Use HTTPS with a reverse proxy (e.g. Nginx or Caddy)
