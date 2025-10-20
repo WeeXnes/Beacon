@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="min-h-screen flex flex-col" data-theme="onedev">
     <!-- Navbar -->
     <nav class="navbar bg-base-100 shadow-lg px-4">
       <div class="flex-1">

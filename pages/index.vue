@@ -36,37 +36,39 @@
     <div class="modal-box">
       <h3 class="text-lg font-bold">Add a new Server</h3>
 
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Server Name</span>
-        </div>
-        <input v-model="addDialog.newServer.name" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Version</span>
-        </div>
-        <input v-model="addDialog.newServer.version" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
+      <div class="grid grid-cols-1 gap-4 py-4">
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">Server Name</span>
+          </div>
+          <input v-model="addDialog.newServer.name" type="text" placeholder="Type here" class="input input-bordered w-full" />
+        </label>
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">Version</span>
+          </div>
+          <input v-model="addDialog.newServer.version" type="text" placeholder="Type here" class="input input-bordered w-full" />
+        </label>
 
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">Jar File Upload</span>
-        </div>
-        <input
-            type="file"
-            accept=".jar"
-            class="file-input file-input-bordered w-full max-w-xs"
-            @change="onFileChange"
-        />
-      </label>
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">Jar File Upload</span>
+          </div>
+          <input
+              type="file"
+              accept=".jar"
+              class="file-input file-input-bordered w-full"
+              @change="onFileChange"
+          />
+        </label>
 
-      <label class="form-control w-full max-w-xs">
-        <div class="label">
-          <span class="label-text">JVM Max Memory</span>
-        </div>
-        <input v-model="addDialog.newServer.maxMemory" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-      </label>
+        <label class="form-control w-full">
+          <div class="label">
+            <span class="label-text">JVM Max Memory</span>
+          </div>
+          <input v-model="addDialog.newServer.maxMemory" type="text" placeholder="Type here" class="input input-bordered w-full" />
+        </label>
+      </div>
 
 
       <div class="modal-action">
