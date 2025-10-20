@@ -56,7 +56,7 @@ A sleek and modern Minecraft server manager built with [Nuxt](https://nuxt.com) 
 ### Installation
 
 ```bash
-git clone https://git.weexnes.dev/WeeXnes/minecraft_server_manager.git
+git clone https://code.weexnes.dev/minecraft_server_manager
 cd minecraft_server_manager
 npm install
 ```
