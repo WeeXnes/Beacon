@@ -223,7 +223,8 @@ const settings = reactive({
 
 const addDialog = reactive({
   newServer: {} as MinecraftServer,
-  uploadData: '' as string
+  uploadData: '' as string,
+  uploadFile: null as File | null
 })
 
 const serverLogDialog = reactive({
@@ -345,18 +346,25 @@ const deleteServer = async (server: MinecraftServer) => {
   }
 }
 
-const addServer = async (server: MinecraftServer) => {
+const addServer = async () => {
+  if (!addDialog.uploadFile) {
+    console.error("No file selected");
+    return;
+  }
+
   try {
-    const checksum = await calculateChecksum(addDialog.uploadData)
-    const response = await axios.post('/api/addServer', {
-      newServer: addDialog.newServer,
-      fileUpload:{
-        data: addDialog.uploadData,
-        checksum: checksum
+    const formData = new FormData();
+    formData.append('newServer', JSON.stringify(addDialog.newServer));
+    formData.append('file', addDialog.uploadFile);
+
+    const response = await axios.post('/api/addServer', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
     });
+
     console.log(response.data);
-    await getServers()
+    await getServers();
   } catch (error) {
     console.error(`Error `, error);
   }
@@ -366,37 +374,7 @@ const addServer = async (server: MinecraftServer) => {
 const onFileChange = async (event: any) => {
   const file = event.target.files[0];
   addDialog.newServer.jarName = file.name;
-
-  if (file) {
-    const reader = new FileReader();
-    const readFile = new Promise<ArrayBuffer>((resolve, reject) => {
-      reader.onload = (e) => {
-        resolve(e.target?.result as ArrayBuffer);
-      };
-      reader.onerror = (error) => {
-        reject(error);
-      };
-    });
-    reader.readAsArrayBuffer(file);
-
-    try {
-      const result = await readFile;
-      addDialog.uploadData = arrayBufferToBase64(result);
-    } catch (error) {
-      console.error("Error reading file:", error);
-    }
-  }
-};
-
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-  const uint8Array = new Uint8Array(buffer);
-  let binaryString = '';
-
-  uint8Array.forEach((byte) => {
-    binaryString += String.fromCharCode(byte);
-  });
-
-  return btoa(binaryString);
+  addDialog.uploadFile = file;
 };
 
 
@@ -406,21 +384,9 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
 
 
 
-const calculateChecksum = async (data: any) => {
-  try {
-    const buffer = data instanceof ArrayBuffer ? data : new TextEncoder().encode(data);
 
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
 
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hexString = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 
-    console.log('Checksum (SHA-256):', hexString);
-    return hexString;
-  } catch (error) {
-    console.error('Error calculating checksum:', error);
-  }
-};
 
 
 
