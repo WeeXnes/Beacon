@@ -1,7 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { sendError, createError } from 'h3';
 import jwt from 'jsonwebtoken';
-import { settings } from '~/panel.config'
 import { environment } from "~/core/globals";
 
 export default defineEventHandler(async (event) => {
@@ -12,7 +11,7 @@ export default defineEventHandler(async (event) => {
             return sendError(event, createError({ statusCode: 400, message: 'password is required' }));
         }
 
-        const isMatch = await bcrypt.compare(password, settings.password_hash);
+        const isMatch = await bcrypt.compare(password, environment.settings.password_hash);
         if (!isMatch) {
             return sendError(event, createError({ statusCode: 400, message: 'Invalid credentials!' }));
         }
