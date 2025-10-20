@@ -65,13 +65,16 @@ npm install
 npm run dev
 ```
 #### 🔐 Admin Password Setup
-By default, the admin password is: `admin`
+By default, the admin password is `admin`.
 
-You can set a custom admin password using the following command:
+To change it, you need to edit the `settings.json` file located in `~/.mcservermanager/settings.json`. The password must be a **bcrypt hash**.
+
+You can generate a bcrypt hash for your desired password using the included script:
 ```bash
 npm run password_gen <your_password>
 ```
-This securely stores the hashed password in `panel.config.ts` so it can be used for login.
+This will output a hash that you can copy and paste into the `settings.json` file.
+
 
 ### 🚀 Production Mode (PM2)
 1. Build the app:
