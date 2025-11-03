@@ -240,9 +240,19 @@ const editServerDialog = reactive({
 })
 
 
+const getAuthHeaders = () => {
+  const token = useCookie('token')
+  return {
+    headers: {
+      Authorization: `Bearer ${token.value}`
+    }
+  }
+}
+
+
 const getServers = async () => {
   try{
-    settings.servers = await $fetch('/api/getServers')
+    settings.servers = await $fetch('/api/getServers', getAuthHeaders())
     settings.servers.forEach((server) => {
       console.log(server.name)
     })
@@ -274,7 +284,7 @@ const getLogs = async () => {
   try{
     const response = await axios.post('/api/getLogs', {
       name: serverLogDialog.selectedServer.name
-    });
+    }, getAuthHeaders());
     const strRet = response.data.logs;
     const stringArray = strRet.split('\n');
     serverLogDialog.logs.length = 0;
@@ -303,7 +313,7 @@ const getProperties = async () => {
   try{
     const response = await axios.post('/api/getProperties', {
       name: editServerDialog.selectedServer.name
-    });
+    }, getAuthHeaders());
     console.log(response.data.properties)
 
     editServerDialog.properties = parse(response.data.properties)
@@ -328,7 +338,7 @@ const editServer = async () => {
     const response = await axios.post('/api/setProperties', {
       name: editServerDialog.selectedServer.name,
       properties: stringify(editServerDialog.properties)
-    });
+    }, getAuthHeaders());
     console.log(response.data);
   } catch (error) {
     console.error(`Error `, error);
@@ -340,7 +350,7 @@ const deleteServer = async (server: MinecraftServer) => {
   try {
     const response = await axios.post('/api/deleteServer', {
       name: server.name
-    });
+    }, getAuthHeaders());
     console.log(response.data);
     await getServers()
   } catch (error) {
@@ -361,7 +371,8 @@ const addServer = async () => {
 
     const response = await axios.post('/api/addServer', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${useCookie('token').value}`
       }
     });
 
@@ -397,7 +408,7 @@ const startServer = async (server: MinecraftServer) => {
   try {
     const response = await axios.post('/api/startServer', {
       name: server.name
-    });
+    }, getAuthHeaders());
     console.log(response.data);
   } catch (error) {
     console.error(`Error `, error);
@@ -408,7 +419,7 @@ const stopServer = async (server: MinecraftServer) => {
   try {
     const response = await axios.post('/api/stopServer', {
       name: server.name
-    });
+    }, getAuthHeaders());
     console.log(response.data);
   } catch (error) {
     console.error(`Error `, error);
@@ -427,11 +438,6 @@ onMounted(async()=>{
 
 onBeforeUnmount(()=>{
   clearInterval(intervalId);
-})
-
-
-definePageMeta({
-  middleware: 'auth'
 })
 
 

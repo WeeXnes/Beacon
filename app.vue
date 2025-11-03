@@ -39,11 +39,24 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const menuOpen = ref(false)
+const loading = ref(true)
+const router = useRouter()
+
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
 }
+
+onMounted(() => {
+  const token = useCookie('token')
+  if (!token.value) {
+    router.push('/login')
+  } else {
+    loading.value = false
+  }
+})
 </script>
