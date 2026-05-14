@@ -2,7 +2,7 @@
   <aside class="w-64 bg-base-200/50 backdrop-blur-lg border-r border-base-content/10 flex flex-col h-screen sticky top-0 transition-all duration-300" :class="{ 'w-20': collapsed }">
     <div class="p-6 flex items-center gap-4 overflow-hidden whitespace-nowrap">
       <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-        <Icon name="pixelarticons:creeper" class="text-primary-content text-xl" />
+        <Icon name="mdi:minecraft" class="text-primary-content text-xl" />
       </div>
       <h1 v-if="!collapsed" class="text-xl font-bold tracking-tight">Beacon</h1>
     </div>
@@ -30,17 +30,19 @@
         active-class="bg-base-content/10 text-primary border-l-4 border-primary rounded-l-none"
       >
         <div class="relative flex items-center justify-center shrink-0">
-          <Icon name="material-symbols:dns-rounded" class="text-2xl" />
+          <Icon name="mdi:minecraft" class="text-2xl" />
+        </div>
+        <div v-if="!collapsed" class="flex items-center gap-2 min-w-0">
           <span 
-            class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-200"
+            class="w-2 h-2 rounded-full shrink-0"
             :class="{
               'bg-success': server.status === 'online',
               'bg-error': server.status === 'offline',
               'bg-warning animate-pulse': ['starting', 'stopping'].includes(server.status)
             }"
           ></span>
+          <span class="font-medium truncate">{{ server.name }}</span>
         </div>
-        <span v-if="!collapsed" class="font-medium truncate">{{ server.name }}</span>
       </NuxtLink>
     </nav>
 

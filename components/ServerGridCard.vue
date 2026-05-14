@@ -6,7 +6,7 @@
         <div class="flex items-center gap-4">
           <!-- Creeper Face Icon as primary server icon -->
           <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-primary-content transition-all duration-300">
-            <Icon name="pixelarticons:creeper" class="text-3xl" />
+            <Icon name="mdi:minecraft" class="text-3xl" />
           </div>
           <div>
             <h3 class="font-bold text-lg leading-none mb-1">{{ server.name }}</h3>

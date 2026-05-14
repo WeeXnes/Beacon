@@ -4,7 +4,7 @@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-base-200/50 backdrop-blur-md p-8 rounded-3xl border border-base-content/5 relative overflow-hidden">
       <div class="flex items-center gap-6 relative z-10">
         <div class="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-          <Icon name="pixelarticons:creeper" class="text-5xl" />
+          <Icon name="mdi:minecraft" class="text-5xl" />
         </div>
         <div>
           <div class="flex items-center gap-3 mb-1">
