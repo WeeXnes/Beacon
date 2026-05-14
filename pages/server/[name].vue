@@ -1,7 +1,7 @@
 <template>
   <div v-if="server" class="p-8 space-y-8 max-w-7xl mx-auto">
     <!-- Server Header -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-base-200/50 backdrop-blur-md p-8 rounded-3xl border border-base-content/5 relative overflow-hidden">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-200/50 backdrop-blur-md p-8 rounded-3xl border border-base-content/5 relative z-20">
       <div class="flex items-center gap-6 relative z-10">
         <div class="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
           <Icon name="mdi:minecraft" class="text-5xl" />
@@ -45,7 +45,7 @@
           <button tabindex="0" class="btn btn-ghost btn-square rounded-xl bg-base-content/5">
             <Icon name="material-symbols:more-vert" class="text-xl" />
           </button>
-          <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-2xl bg-base-100 border border-base-content/5 rounded-2xl w-52 mt-2">
+          <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow-2xl bg-base-100 border border-base-content/5 rounded-2xl w-52 mt-2">
             <li><button class="text-error" @click="handleDelete"><Icon name="material-symbols:delete-rounded" /> Delete Server</button></li>
           </ul>
         </div>
