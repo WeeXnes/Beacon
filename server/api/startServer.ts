@@ -1,6 +1,7 @@
 import {getJarPath, getServerByName, getServerDirectory} from "~/types/MinecraftServer";
 import {execa} from "execa";
 import { consola } from 'consola';
+import { environment } from '~/core/globals';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -19,9 +20,20 @@ export default defineEventHandler(async (event) => {
         const xmsArg = `-Xms${server.maxMemory}G`
         const xmxArg = `-Xmx${server.maxMemory}G`
 
-        consola.start(`[SERVER] 🚀 Starting server "${server.name}" (${xmsArg}, ${xmxArg})`);
+        // Determine Java binary
+        let javaBinary = 'java';
+        if (server.javaVersionName) {
+            const javaVersion = environment.settings.javaVersions.find(v => v.name === server.javaVersionName);
+            if (javaVersion) {
+                javaBinary = javaVersion.path;
+            } else {
+                consola.warn(`[SERVER] ⚠️ Configured Java version "${server.javaVersionName}" not found, falling back to system "java"`);
+            }
+        }
 
-        server.process = execa('java', [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
+        consola.start(`[SERVER] 🚀 Starting server "${server.name}" using ${javaBinary} (${xmsArg}, ${xmxArg})`);
+
+        server.process = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
             cwd: getServerDirectory(server),
         });
 
@@ -39,7 +51,12 @@ export default defineEventHandler(async (event) => {
         });
 
         server.process.stderr.on('data', (data: Buffer) => {
-            consola.error(`[SERVER] 🚩 [${server.name}] STDERR: ${data.toString().trim()}`);
+            const line = data.toString().trim();
+            if (line.includes('Advanced terminal features are not available')) {
+                consola.warn(`[SERVER] ⚠️ [${server.name}] Terminal: ${line}`);
+            } else {
+                consola.error(`[SERVER] 🚩 [${server.name}] STDERR: ${line}`);
+            }
         });
 
         server.process.on('exit', (code: number) => {

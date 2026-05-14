@@ -35,6 +35,7 @@ export const useServers = () => {
             existing.version = newS.version;
             existing.maxMemory = newS.maxMemory;
             existing.jarName = newS.jarName;
+            existing.javaVersionName = newS.javaVersionName;
           } else {
             servers.value.push(newS);
           }

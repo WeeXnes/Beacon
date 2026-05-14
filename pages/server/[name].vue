@@ -158,6 +158,35 @@
           </div>
         </div>
       </div>
+
+      <div v-if="activeTab === 'settings'">
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
+            <h3 class="font-bold">Beacon Server Settings</h3>
+            <button @click="saveBeaconSettings" class="btn btn-primary btn-sm rounded-xl px-6">Save Settings</button>
+          </div>
+          <div class="p-8 space-y-8">
+            <div class="form-control max-w-md">
+              <label class="label"><span class="label-text font-bold">Max Allocated RAM (GB)</span></label>
+              <div class="flex items-center gap-6">
+                <input type="range" min="1" max="32" v-model="server.maxMemory" class="range range-primary range-sm flex-1" />
+                <span class="w-16 text-center font-bold bg-primary/10 text-primary py-1 rounded-lg">{{ server.maxMemory }}GB</span>
+              </div>
+            </div>
+
+            <div class="form-control max-w-md">
+              <label class="label"><span class="label-text font-bold">Java Runtime</span></label>
+              <select v-model="server.javaVersionName" class="select select-bordered rounded-xl bg-base-100/50 border-base-content/5">
+                <option :value="undefined">System Default (java)</option>
+                <option v-for="java in javaVersions" :key="java.name" :value="java.name">{{ java.name }}</option>
+              </select>
+              <label class="label">
+                <span class="label-text-alt text-base-content/40">Select which Java version to use for this instance.</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -184,8 +213,37 @@ const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
   { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
   { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
+  { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
   { id: 'backups', label: 'Backups', icon: 'material-symbols:history-rounded' },
 ]
+
+const javaVersions = ref<any[]>([])
+
+const fetchJavaVersions = async () => {
+  try {
+    javaVersions.value = await $fetch('/api/getJavaVersions', {
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    })
+  } catch (error) {
+    console.error('Failed to fetch Java versions:', error);
+  }
+}
+
+const saveBeaconSettings = async () => {
+  try {
+    await $fetch('/api/setServers', {
+      method: 'POST',
+      body: { servers: servers.value },
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    })
+  } catch (error) {
+    console.error('Failed to save beacon settings:', error);
+  }
+}
 
 const handleSendCommand = async () => {
   if (!commandInput.value.trim()) return
@@ -276,6 +334,7 @@ let intervalId: NodeJS.Timeout
 onMounted(async () => {
   await getProperties()
   await listFiles()
+  await fetchJavaVersions()
   intervalId = setInterval(fetchLogs, 1000)
 })
 

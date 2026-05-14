@@ -10,6 +10,12 @@ export function loadJsonFile(){
         createEmptySettingsIfNotExists()
         let jsonStr = fs.readFileSync(environment.files.settings, 'utf-8')
         environment.settings = JSON.parse(jsonStr);
+        
+        // Ensure javaVersions exists for older config files
+        if (!environment.settings.javaVersions) {
+            environment.settings.javaVersions = [];
+        }
+
         environment.settings.servers.forEach(server => {
             server.status = 'offline';
             server.process = null;
@@ -47,7 +53,8 @@ function createEmptySettingsIfNotExists() {
         let emptySettings: SettingsJsonFile = ({
             eula: true,
             servers:[],
-            password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje"
+            password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje",
+            javaVersions: []
         });
         const jsonSettings = JSON.stringify(emptySettings, null, 2);
         fs.writeFileSync(environment.files.settings, jsonSettings);

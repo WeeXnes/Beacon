@@ -9,6 +9,7 @@ export interface MinecraftServer {
     maxMemory: number;
     status: ServerStatus;
     process: any;
+    javaVersionName?: string;
 }
 
 
