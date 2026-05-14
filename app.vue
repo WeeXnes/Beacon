@@ -30,7 +30,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const router = useRouter()
-const { fetchServers } = useServers()
+const { fetchServers, startPolling, stopPolling } = useServers()
 
 const isLoginPage = computed(() => route.path === '/login')
 const routeName = computed(() => {
@@ -40,6 +40,7 @@ const routeName = computed(() => {
 })
 
 const logout = () => {
+  stopPolling()
   const token = useCookie('token')
   token.value = null
   router.push('/login')
@@ -50,8 +51,20 @@ onMounted(async () => {
   if (!token.value && !isLoginPage.value) {
     router.push('/login')
   } else if (token.value) {
-    await fetchServers()
+    startPolling(3000)
   }
+})
+
+// Restart polling if we login
+watch(() => route.path, (newPath) => {
+  const token = useCookie('token')
+  if (newPath !== '/login' && token.value) {
+    startPolling(3000)
+  }
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 

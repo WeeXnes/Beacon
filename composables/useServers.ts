@@ -68,11 +68,28 @@ export const useServers = () => {
     }
   };
 
+  let pollInterval: NodeJS.Timeout | null = null;
+
+  const startPolling = (intervalMs = 3000) => {
+    if (pollInterval) return;
+    fetchServers(); // Initial fetch
+    pollInterval = setInterval(fetchServers, intervalMs);
+  };
+
+  const stopPolling = () => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  };
+
   return {
     servers,
     loading,
     fetchServers,
     startServer,
-    stopServer
+    stopServer,
+    startPolling,
+    stopPolling
   };
 };

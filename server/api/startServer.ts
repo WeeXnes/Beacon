@@ -28,8 +28,13 @@ export default defineEventHandler(async (event) => {
 
         server.process.stdout.on('data', (data: Buffer) => {
             const line = data.toString();
-            if (line.includes('Done') || line.includes('For help, type "help"')) {
+            // Broader detection for server ready
+            if (line.includes('Done') || 
+                line.includes('For help, type "help"') || 
+                line.includes('? for help') ||
+                line.includes('Starting remote control listener')) {
                 server.status = 'online';
+                console.log(`[${server.name}] Server is now online.`);
             }
         });
 

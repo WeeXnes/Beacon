@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
+        await fs.access(getLogsPath(server));
         const rawLogs = await fs.readFile(getLogsPath(server), 'utf-8');
         const lines = rawLogs.split('\n');
         const lastLines = lines.slice(-100).join('\n');
@@ -21,9 +22,9 @@ export default defineEventHandler(async (event) => {
         };
     } catch (error: any) {
         return {
-            message: "Failed to get logs for " + server_name,
+            message: "Logs not yet available for " + server_name,
             logs: "",
-            error: error.message
+            error: error.code === 'ENOENT' ? 'Log file not found' : error.message
         };
     }
 });
