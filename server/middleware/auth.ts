@@ -1,6 +1,7 @@
 
 import jwt from 'jsonwebtoken';
 import { environment } from '~/core/globals';
+import { consola } from 'consola';
 
 export default defineEventHandler(async (event) => {
   const path = getRequestPath(event);
@@ -10,21 +11,24 @@ export default defineEventHandler(async (event) => {
 
   if (isApi && !isLogin && !isIcon) {
     const authHeader = getHeader(event, 'authorization');
+    const method = event.method;
+
     if (!authHeader) {
-      console.warn(`[Auth] Missing Authorization header for ${path}`);
+      consola.warn(`[AUTH] 🔒 Unauthorized access attempt: ${method} ${path} (Missing Token)`);
       return sendError(event, createError({ statusCode: 401, message: 'Unauthorized' }));
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      console.warn(`[Auth] Malformed Authorization header for ${path}`);
+      consola.warn(`[AUTH] ⚠️ Malformed token: ${method} ${path}`);
       return sendError(event, createError({ statusCode: 401, message: 'Unauthorized' }));
     }
 
     try {
       jwt.verify(token, environment.jwt_globals.secret);
+      consola.success(`[AUTH] ✅ Authorized: ${method} ${path}`);
     } catch (error: any) {
-      console.error(`[Auth] Token verification failed for ${path}: ${error.message}`);
+      consola.error(`[AUTH] ❌ Token verification failed: ${method} ${path} - ${error.message}`);
       return sendError(event, createError({ statusCode: 401, message: 'Unauthorized' }));
     }
   }
