@@ -57,7 +57,7 @@
       <!-- About -->
       <div class="text-center p-8 space-y-4">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
-          <Icon name="mdi:minecraft" class="text-2xl" />
+          <Icon name="pixelarticons:creeper" class="text-2xl" />
         </div>
         <div>
           <p class="font-bold">Beacon Manager</p>

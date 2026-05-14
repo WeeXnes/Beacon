@@ -3,7 +3,7 @@
     <div class="max-w-md w-full">
       <div class="text-center mb-10">
         <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 text-primary mb-6 border border-primary/20 shadow-xl shadow-primary/5">
-          <Icon name="mdi:minecraft" class="text-5xl" />
+          <Icon name="pixelarticons:creeper" class="text-5xl" />
         </div>
         <h1 class="text-4xl font-black tracking-tight mb-2">Beacon</h1>
         <p class="text-base-content/50 font-medium">Authentication Required</p>

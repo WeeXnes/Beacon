@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between">
       <span class="text-sm font-medium text-base-content/60">{{ title }}</span>
       <div :class="`w-10 h-10 rounded-lg bg-${color}/10 text-${color} flex items-center justify-center shrink-0`">
-        <Icon :name="icon" class="text-xl" />
+        <Icon :name="icon" class="text-xl block" />
       </div>
     </div>
     <div class="flex items-end gap-2">

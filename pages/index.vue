@@ -15,17 +15,16 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatCard 
-        title="Total Servers" 
-        :value="servers.length" 
-        icon="material-symbols:dns-rounded" 
-        color="primary" 
-      />
-      <StatCard 
-        title="Online Now" 
+        title="Online" 
         :value="onlineCount" 
         icon="material-symbols:check-circle-rounded" 
         color="success" 
-        trend="+2 today"
+      />
+      <StatCard 
+        title="Offline" 
+        :value="offlineCount" 
+        icon="material-symbols:cancel-rounded" 
+        color="error" 
       />
       <StatCard 
         title="Memory Usage" 
@@ -34,9 +33,9 @@
         color="warning" 
       />
       <StatCard 
-        title="Active Players" 
-        value="12" 
-        icon="material-symbols:group-rounded" 
+        title="CPU Usage" 
+        value="12%" 
+        icon="material-symbols:settings-input-component-rounded" 
         color="info" 
       />
     </div>
@@ -138,6 +137,7 @@ import axios from 'axios';
 const { servers, loading, startServer, stopServer, fetchServers } = useServers()
 
 const onlineCount = computed(() => servers.value.filter(s => s.status === 'online').length)
+const offlineCount = computed(() => servers.value.filter(s => s.status === 'offline').length)
 
 const addDialog = reactive({
   newServer: {
