@@ -2,13 +2,9 @@
   <div v-if="server" class="p-8 space-y-8 max-w-7xl mx-auto">
     <!-- Server Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-base-200/50 backdrop-blur-md p-8 rounded-3xl border border-base-content/5 relative overflow-hidden">
-      <div class="absolute top-0 right-0 p-8 opacity-5">
-        <Icon name="mdi:minecraft" class="text-9xl" />
-      </div>
-
       <div class="flex items-center gap-6 relative z-10">
         <div class="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-          <Icon name="material-symbols:dns-rounded" class="text-4xl" />
+          <Icon name="mdi:minecraft" class="text-5xl" />
         </div>
         <div>
           <div class="flex items-center gap-3 mb-1">

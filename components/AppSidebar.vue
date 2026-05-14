@@ -29,10 +29,10 @@
         class="flex items-center gap-4 px-3 py-3 rounded-xl transition-all hover:bg-base-content/5 group"
         active-class="bg-base-content/10 text-primary border-l-4 border-primary rounded-l-none"
       >
-        <div class="relative shrink-0">
+        <div class="relative flex items-center justify-center shrink-0">
           <Icon name="material-symbols:dns-rounded" class="text-2xl" />
           <span 
-            class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-base-200"
+            class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-200"
             :class="{
               'bg-success': server.status === 'online',
               'bg-error': server.status === 'offline',
@@ -40,7 +40,7 @@
             }"
           ></span>
         </div>
-        <span v-if="!collapsed" class="font-medium truncate">{{ server.name }}</span>
+        <span v-if="!collapsed" class="font-medium truncate leading-none">{{ server.name }}</span>
       </NuxtLink>
     </nav>
 
