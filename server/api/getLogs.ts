@@ -11,12 +11,13 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-
         const rawLogs = await fs.readFile(getLogsPath(server), 'utf-8');
-        const strippedLogs = rawLogs.slice(0, -2);
+        const lines = rawLogs.split('\n');
+        const lastLines = lines.slice(-100).join('\n');
+        
         return {
             message: `Logs for ${server_name}`,
-            logs: strippedLogs
+            logs: lastLines
         };
     } catch (error: any) {
         return {

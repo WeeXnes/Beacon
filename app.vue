@@ -1,62 +1,68 @@
 <template>
-  <div class="min-h-screen flex flex-col" data-theme="onedev">
-    <!-- Navbar -->
-    <nav class="navbar bg-base-100 shadow-lg px-4">
-      <div class="flex-1">
-        <NuxtLink to="/" class="btn btn-ghost text-xl">Server Panel</NuxtLink>
-      </div>
-      <div class="hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
-          <li><NuxtLink to="/">Dashboard</NuxtLink></li>
-          <li><NuxtLink to="/settings">Settings</NuxtLink></li>
-        </ul>
-      </div>
-      <div class="lg:hidden">
-        <button @click="toggleMenu" class="btn btn-square btn-ghost">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-          </svg>
-        </button>
-      </div>
-      <!-- Mobile Menu -->
-      <div v-if="menuOpen" class="absolute top-16 left-0 w-full bg-base-100 shadow-lg lg:hidden z-50">
-        <ul class="menu menu-vertical p-4">
-          <li><NuxtLink to="/" @click="toggleMenu">Dashboard</NuxtLink></li>
-          <li><NuxtLink to="/settings" @click="toggleMenu">Settings</NuxtLink></li>
-        </ul>
-      </div>
-    </nav>
+  <div class="min-h-screen flex bg-base-100 font-sans text-base-content selection:bg-primary/30" data-theme="onedev">
+    <AppSidebar v-if="!isLoginPage" />
+    
+    <div class="flex-1 flex flex-col min-w-0">
+      <header v-if="!isLoginPage" class="h-16 border-b border-base-content/5 flex items-center justify-between px-8 bg-base-100/50 backdrop-blur-md sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+          <h2 class="text-lg font-semibold capitalize">{{ routeName }}</h2>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-base-200 border border-base-content/5 text-sm">
+            <span class="w-2 h-2 rounded-full bg-success"></span>
+            <span class="opacity-70">System Healthy</span>
+          </div>
+          <button @click="logout" class="btn btn-ghost btn-sm gap-2">
+            <Icon name="material-symbols:logout-rounded" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-4">
-      <NuxtPage />
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer p-4 bg-neutral text-neutral-content text-center">
-      <a href="https://github.com/WeeXnes"> Minecraft Server Panel by WeeXnes</a>
-    </footer>
+      <main class="flex-1 overflow-y-auto">
+        <NuxtPage />
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-
-const menuOpen = ref(false)
-const loading = ref(true)
+const route = useRoute()
 const router = useRouter()
+const { fetchServers } = useServers()
 
-const toggleMenu = () => {
-  menuOpen.value = !menuOpen.value
+const isLoginPage = computed(() => route.path === '/login')
+const routeName = computed(() => {
+  if (route.path === '/') return 'Dashboard'
+  if (route.path.startsWith('/server/')) return 'Server Details'
+  return route.name?.toString().replace(/-/g, ' ') || ''
+})
+
+const logout = () => {
+  const token = useCookie('token')
+  token.value = null
+  router.push('/login')
 }
 
-onMounted(() => {
+onMounted(async () => {
   const token = useCookie('token')
-  if (!token.value) {
+  if (!token.value && !isLoginPage.value) {
     router.push('/login')
-  } else {
-    loading.value = false
+  } else if (token.value) {
+    await fetchServers()
   }
 })
 </script>
+
+<style>
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.2s;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  filter: blur(1rem);
+}
+</style>

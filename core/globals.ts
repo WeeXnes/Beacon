@@ -5,9 +5,9 @@ import { reactive } from "vue";
 import {saveJsonFile} from "~/util/jsonLoader";
 
 export namespace environment{
-    export const jwt_globals = reactive({
+    export const jwt_globals = {
         secret: "tH5kunVlY4rDIv10Y6Hy0NoLKpH1uYtW",
-    });
+    };
     export namespace paths{
         export let data: string = `${os.homedir()}/.mcservermanager`;
         export let servers: string = `${os.homedir()}/.mcservermanager/servers`;

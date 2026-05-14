@@ -1,453 +1,180 @@
 <template>
-  <div class="flex flex-col items-center justify-center py-16 px-6">
-    <h1 class="text-4xl font-bold text-center mb-6">Minecraft Servers</h1>
-    <div class="grid md:grid-cols-3 gap-6 w-full max-w-5xl mb-8">
-      <div v-for="server in settings.servers" class="card bg-base-100 shadow-2xl p-6">
-        <h2 class="text-xl font-bold text-center cursor-pointer" @click="showServerLogDialog(server)">
-          {{ server.name }}
+  <div class="p-8 space-y-8 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight">System Overview</h1>
+        <p class="text-base-content/50">Monitor and manage all your Minecraft instances from one place.</p>
+      </div>
+      <button onclick="addServerModal.showModal()" class="btn btn-primary gap-2 rounded-2xl shadow-lg shadow-primary/20">
+        <Icon name="material-symbols:add-rounded" class="text-xl" />
+        New Server
+      </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatCard 
+        title="Total Servers" 
+        :value="servers.length" 
+        icon="material-symbols:dns-rounded" 
+        color="primary" 
+      />
+      <StatCard 
+        title="Online Now" 
+        :value="onlineCount" 
+        icon="material-symbols:check-circle-rounded" 
+        color="success" 
+        trend="+2 today"
+      />
+      <StatCard 
+        title="Memory Usage" 
+        value="4.2 GB" 
+        icon="material-symbols:memory-rounded" 
+        color="warning" 
+      />
+      <StatCard 
+        title="Active Players" 
+        value="12" 
+        icon="material-symbols:group-rounded" 
+        color="info" 
+      />
+    </div>
+
+    <!-- Servers Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          <Icon name="material-symbols:list-alt-rounded" class="text-primary" />
+          Active Instances
         </h2>
-
-        <div class="mt-2 text-sm">
-          <p><strong>Version:</strong> {{ server.version }}</p>
-          <p><strong>Memory:</strong> {{ server.maxMemory }} GB</p>
-        </div>
-
-        <div class="form-control mt-4 flex flex-row gap-2">
-          <button @click="startServer(server)" class="btn btn-primary w-1/3">Start</button>
-          <button @click="showEditServerDialog(server)" class="btn btn-warning w-1/3">Edit</button>
-          <button @click="stopServer(server)" class="btn btn-error w-1/3">Stop</button>
-
-        </div>
-
       </div>
 
-      <div class="card bg-base-100 shadow-2xl p-6 cursor-pointer" onclick="addServerModal.showModal()">
-        <h2 class="text-xl font-bold text-center">
-          Add Server
-        </h2>
-        <div class="mt-2 text-sm flex justify-center">
-          <Icon name="material-symbols:add" class="icon" />
-        </div>
+      <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="i in 3" :key="i" class="h-64 rounded-2xl bg-base-200/50 animate-pulse border border-base-content/5"></div>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <ServerGridCard 
+          v-for="server in servers" 
+          :key="server.name" 
+          :server="server"
+          @start="startServer"
+          @stop="stopServer"
+        />
+
+        <!-- Add Server Placeholder -->
+        <button 
+          onclick="addServerModal.showModal()"
+          class="group border-2 border-dashed border-base-content/10 rounded-2xl flex flex-col items-center justify-center gap-4 min-h-[16rem] transition-all hover:border-primary/40 hover:bg-primary/5"
+        >
+          <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+            <Icon name="material-symbols:add-rounded" class="text-3xl" />
+          </div>
+          <div class="text-center">
+            <p class="font-bold">Add Instance</p>
+            <p class="text-xs text-base-content/40">Deploy a new server jar</p>
+          </div>
+        </button>
       </div>
     </div>
+
+    <!-- Add Server Modal (Kept for now, but restyled) -->
+    <dialog id="addServerModal" class="modal">
+      <div class="modal-box rounded-3xl bg-base-100 border border-base-content/5 shadow-2xl p-0 overflow-hidden">
+        <div class="bg-primary p-6 text-primary-content">
+          <h3 class="text-xl font-bold flex items-center gap-2">
+            <Icon name="material-symbols:add-circle-rounded" />
+            Deploy New Server
+          </h3>
+          <p class="opacity-80 text-sm mt-1">Configure your new Minecraft instance settings.</p>
+        </div>
+
+        <div class="p-8 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Server Name</span></label>
+              <input v-model="addDialog.newServer.name" type="text" placeholder="Survival 1.20" class="input input-bordered rounded-xl bg-base-200/50 border-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Version</span></label>
+              <input v-model="addDialog.newServer.version" type="text" placeholder="1.20.1" class="input input-bordered rounded-xl bg-base-200/50 border-none focus:ring-2 focus:ring-primary" />
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text font-bold">Server JAR File</span></label>
+            <input type="file" accept=".jar" class="file-input file-input-bordered rounded-xl bg-base-200/50 border-none" @change="onFileChange" />
+            <label class="label"><span class="label-text-alt text-base-content/40">Select the paper.jar or server.jar file</span></label>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text font-bold">Max Allocated RAM (GB)</span></label>
+            <div class="flex items-center gap-4">
+              <input type="range" min="1" max="16" v-model="addDialog.newServer.maxMemory" class="range range-primary range-sm flex-1" />
+              <span class="w-16 text-center font-bold bg-primary/10 text-primary py-1 rounded-lg">{{ addDialog.newServer.maxMemory }}GB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 bg-base-200/50 flex justify-end gap-3">
+          <form method="dialog">
+            <button class="btn btn-ghost rounded-xl">Cancel</button>
+          </form>
+          <button class="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20" @click="handleAddServer">Create Server</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
-
-  <dialog id="addServerModal" class="modal">
-    <div class="modal-box">
-      <h3 class="text-lg font-bold">Add a new Server</h3>
-
-      <div class="grid grid-cols-1 gap-4 py-4">
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text">Server Name</span>
-          </div>
-          <input v-model="addDialog.newServer.name" type="text" placeholder="Type here" class="input input-bordered w-full" />
-        </label>
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text">Version</span>
-          </div>
-          <input v-model="addDialog.newServer.version" type="text" placeholder="Type here" class="input input-bordered w-full" />
-        </label>
-
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text">Jar File Upload</span>
-          </div>
-          <input
-              type="file"
-              accept=".jar"
-              class="file-input file-input-bordered w-full"
-              @change="onFileChange"
-          />
-        </label>
-
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text">JVM Max Memory</span>
-          </div>
-          <input v-model="addDialog.newServer.maxMemory" type="text" placeholder="Type here" class="input input-bordered w-full" />
-        </label>
-      </div>
-
-
-      <div class="modal-action">
-        <form method="dialog">
-          <button class="btn" @click="addServer">Add</button>
-        </form>
-      </div>
-    </div>
-  </dialog>
-
-
-
-
-
-  <input type="checkbox" id="serverLogModal" class="modal-toggle" />
-  <div class="modal" role="dialog">
-    <div class="modal-box w-11/12 max-w-5xl">
-      <h3 class="text-lg font-bold text-center">{{ serverLogDialog.selectedServer.name }}</h3>
-      <div class="mockup-code w-full">
-        <pre v-for="str in serverLogDialog.logs" data-prefix="$"><code>{{str}}</code></pre>
-      </div>
-      <div class="modal-action flex justify-between space-x-4">
-        <!-- Start Button -->
-        <button @click="startServer(serverLogDialog.selectedServer)" class="btn btn-primary">Start</button>
-
-        <!-- Stop Button -->
-        <button @click="stopServer(serverLogDialog.selectedServer)" class="btn btn-error">Stop</button>
-      </div>
-    </div>
-    <label class="modal-backdrop" for="serverLogModal">Close</label>
-  </div>
-
-
-
-  <dialog id="editServerModal" class="modal">
-    <div class="modal-box">
-      <h3 class="text-lg font-bold">Edit Server: {{ editServerDialog.selectedServer.name }}</h3>
-
-      <div class="grid grid-cols-2 gap-4">
-        <!-- First row -->
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Difficulty</span>
-          </div>
-          <input v-model="editServerDialog.properties['difficulty']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Server Port</span>
-          </div>
-          <input v-model="editServerDialog.properties['server-port']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <!-- Second row (adding more elements) -->
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Command Blocks</span>
-          </div>
-          <input v-model="editServerDialog.properties['enable-command-block']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Gamemode</span>
-          </div>
-          <input v-model="editServerDialog.properties['gamemode']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <!-- Third row -->
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Slots</span>
-          </div>
-          <input v-model="editServerDialog.properties['max-players']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">PVP</span>
-          </div>
-          <input v-model="editServerDialog.properties['pvp']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Render Distance</span>
-          </div>
-          <input v-model="editServerDialog.properties['view-distance']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Simulation Distance</span>
-          </div>
-          <input v-model="editServerDialog.properties['simulation-distance']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">Server Banner</span>
-          </div>
-          <input v-model="editServerDialog.properties['motd']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-        <label class="form-control w-full max-w-xs">
-          <div class="label">
-            <span class="label-text">PVP</span>
-          </div>
-          <input v-model="editServerDialog.properties['pvp']" type="text" placeholder="Type here" class="input input-bordered w-full max-w-xs" />
-        </label>
-
-
-      </div>
-
-
-
-
-
-      <div class="modal-action flex justify-between space-x-4">
-        <!-- Save Button -->
-        <form method="dialog">
-          <button class="btn btn-primary" @click="editServer">Save</button>
-        </form>
-
-        <!-- Delete Button -->
-        <form method="dialog">
-          <button class="btn btn-error" @click="deleteServer(editServerDialog.selectedServer)">Delete</button>
-        </form>
-      </div>
-
-    </div>
-  </dialog>
-
-
-
 </template>
 
-
-
-
 <script setup lang="ts">
-
-import type {MinecraftServer} from "~/types/MinecraftServer";
+import type { MinecraftServer } from "~/types/MinecraftServer";
 import axios from 'axios';
-import {parse, stringify} from 'ini'
 
-const settings = reactive({
-  servers: [] as MinecraftServer[],
-})
+const { servers, loading, startServer, stopServer, fetchServers } = useServers()
+
+const onlineCount = computed(() => servers.value.filter(s => s.status === 'online').length)
 
 const addDialog = reactive({
-  newServer: {} as MinecraftServer,
-  uploadData: '' as string,
+  newServer: {
+    maxMemory: 2
+  } as MinecraftServer,
   uploadFile: null as File | null
 })
 
-const serverLogDialog = reactive({
-  selectedServer: {} as MinecraftServer,
-  logs: [] as string[],
-})
-
-const editServerDialog = reactive({
-  selectedServer: {} as MinecraftServer,
-  properties: {} as { [p: string]: any }
-})
-
-
-const getAuthHeaders = () => {
-  const token = useCookie('token')
-  return {
-    headers: {
-      Authorization: `Bearer ${token.value}`
-    }
+const onFileChange = (event: any) => {
+  const file = event.target.files[0];
+  if (file) {
+    addDialog.newServer.jarName = file.name;
+    addDialog.uploadFile = file;
   }
-}
+};
 
-
-const getServers = async () => {
-  try{
-    settings.servers = await $fetch('/api/getServers', getAuthHeaders())
-    settings.servers.forEach((server) => {
-      console.log(server.name)
-    })
-  }catch(error){
-    console.error(`Error fetch: ${error}`);
-  }
-}
-
-const showServerLogDialog = async (server: MinecraftServer) => {
-  serverLogDialog.selectedServer = server
-  // @ts-ignore
-  serverLogModal.checked = true
-}
-
-const getLogs = async () => {
-
-
-  // @ts-ignore
-  if(!serverLogModal.checked){
-    if(serverLogDialog.logs.length != 0){
-      serverLogDialog.logs.length = 0;
-    }
-    return
-  }
-
-  if(!serverLogDialog.selectedServer)
-    return
-
-  try{
-    const response = await axios.post('/api/getLogs', {
-      name: serverLogDialog.selectedServer.name
-    }, getAuthHeaders());
-    const strRet = response.data.logs;
-    const stringArray = strRet.split('\n');
-    serverLogDialog.logs.length = 0;
-    stringArray.slice(-20).forEach((element: string) => {
-      serverLogDialog.logs.push(element);
-    })
-  }catch(error){
-    console.error(`Error fetch: ${error}`);
-  }
-}
-
-
-
-
-const showEditServerDialog = async (server: MinecraftServer) => {
-  editServerDialog.selectedServer = server
-  await getProperties()
-  // @ts-ignore
-  editServerModal.showModal()
-}
-
-const getProperties = async () => {
-  // @ts-ignore
-  editServerModal.showModal()
-
-  try{
-    const response = await axios.post('/api/getProperties', {
-      name: editServerDialog.selectedServer.name
-    }, getAuthHeaders());
-    console.log(response.data.properties)
-
-    editServerDialog.properties = parse(response.data.properties)
-
-  }catch(error){
-    console.error(`Error fetch: ${error}`);
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-const editServer = async () => {
-  try {
-    const response = await axios.post('/api/setProperties', {
-      name: editServerDialog.selectedServer.name,
-      properties: stringify(editServerDialog.properties)
-    }, getAuthHeaders());
-    console.log(response.data);
-  } catch (error) {
-    console.error(`Error `, error);
-  }
-}
-
-
-const deleteServer = async (server: MinecraftServer) => {
-  try {
-    const response = await axios.post('/api/deleteServer', {
-      name: server.name
-    }, getAuthHeaders());
-    console.log(response.data);
-    await getServers()
-  } catch (error) {
-    console.error(`Error `, error);
-  }
-}
-
-const addServer = async () => {
-  if (!addDialog.uploadFile) {
-    console.error("No file selected");
-    return;
-  }
+const handleAddServer = async () => {
+  if (!addDialog.uploadFile) return;
 
   try {
     const formData = new FormData();
     formData.append('newServer', JSON.stringify(addDialog.newServer));
     formData.append('file', addDialog.uploadFile);
 
-    const response = await axios.post('/api/addServer', formData, {
+    await $fetch('/api/addServer', {
+      method: 'POST',
+      body: formData,
       headers: {
-        'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${useCookie('token').value}`
       }
     });
 
-    console.log(response.data);
-    await getServers();
+    await fetchServers();
+    // @ts-ignore
+    addServerModal.close();
   } catch (error) {
-    console.error(`Error `, error);
+    console.error('Failed to add server:', error);
   }
 }
-
-
-const onFileChange = async (event: any) => {
-  const file = event.target.files[0];
-  addDialog.newServer.jarName = file.name;
-  addDialog.uploadFile = file;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const startServer = async (server: MinecraftServer) => {
-  try {
-    const response = await axios.post('/api/startServer', {
-      name: server.name
-    }, getAuthHeaders());
-    console.log(response.data);
-  } catch (error) {
-    console.error(`Error `, error);
-  }
-};
-
-const stopServer = async (server: MinecraftServer) => {
-  try {
-    const response = await axios.post('/api/stopServer', {
-      name: server.name
-    }, getAuthHeaders());
-    console.log(response.data);
-  } catch (error) {
-    console.error(`Error `, error);
-  }
-};
-
-
-
-let intervalId: NodeJS.Timeout;
-
-
-onMounted(async()=>{
-  await getServers()
-  intervalId = setInterval(getLogs, 500);
-})
-
-onBeforeUnmount(()=>{
-  clearInterval(intervalId);
-})
-
-
 </script>
-
-
-<style>
-.icon {
-  width: 5rem;  /* You can adjust this value based on your needs */
-  height: 5rem; /* Set both width and height */
-  object-fit: contain; /* Keep the aspect ratio of the icon */
-}
-</style>

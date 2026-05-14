@@ -24,17 +24,24 @@ export default defineEventHandler(async (event) => {
             cwd: getServerDirectory(server),
         });
 
-        server.process.stdout.on('data', (data: string) => {});
+        server.status = 'starting';
 
-        server.process.stderr.on('data', (data: string) => {
-            const errorData = data.toString();
-            console.log(errorData);
+        server.process.stdout.on('data', (data: Buffer) => {
+            const line = data.toString();
+            if (line.includes('Done') || line.includes('For help, type "help"')) {
+                server.status = 'online';
+            }
         });
 
-        server.process.on('exit', (code: string) => {
-            console.log(`Server exit signal from startServer with code ${code}`);
+        server.process.stderr.on('data', (data: Buffer) => {
+            console.error(`[${server.name}] ${data.toString()}`);
+        });
+
+        server.process.on('exit', (code: number) => {
+            console.log(`Server ${server.name} exited with code ${code}`);
             server.process = null;
-        })
+            server.status = 'offline';
+        });
 
         return { message: "Minecraft server started." };
     } catch (error: any) {

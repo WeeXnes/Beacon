@@ -13,22 +13,29 @@ export default defineEventHandler(async (event) => {
         return {status: 'error', error: 'Missing newServer or file part'};
     }
 
-    const newServer = JSON.parse(newServerPart.data.toString());
-    const server = getServerByName(newServer.name);
-
-    if (server) {
-        return {message: "Server with name " + newServer.name + " does already exist"};
-    }
-
     try {
-        environment.settings.servers.push({...newServer});
+        const newServer = JSON.parse(newServerPart.data.toString());
+        const server = getServerByName(newServer.name);
+
+        if (server) {
+            return { message: "Server with name " + newServer.name + " does already exist" };
+        }
+
+        const serverDir = environment.paths.servers + "/" + newServer.name;
+        if (!fs.existsSync(serverDir)) {
+            fs.mkdirSync(serverDir, { recursive: true });
+        }
+
+        environment.settings.servers.push({ ...newServer, status: 'offline' });
         saveJsonFile();
 
-        fs.writeFileSync(getJarPath(newServer), filePart.data);
+        const jarPath = serverDir + "/" + newServer.jarName;
+        fs.writeFileSync(jarPath, filePart.data);
 
-        return {status: 'success'};
-    } catch (error) {
-        return {status: 'error', error: error};
+        return { status: 'success' };
+    } catch (error: any) {
+        console.error('Error adding server:', error);
+        return { status: 'error', error: error.message };
     }
 });
 

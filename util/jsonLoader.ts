@@ -10,6 +10,10 @@ export function loadJsonFile(){
         createEmptySettingsIfNotExists()
         let jsonStr = fs.readFileSync(environment.files.settings, 'utf-8')
         environment.settings = JSON.parse(jsonStr);
+        environment.settings.servers.forEach(server => {
+            server.status = 'offline';
+            server.process = null;
+        });
 
         checkAllServerDirectories()
     } catch (error) {

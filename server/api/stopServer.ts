@@ -15,11 +15,13 @@ export default defineEventHandler(async (event) => {
     
 
     try {
+        server.status = 'stopping';
         server.process.stdin.write('stop\n');
 
         server.process.on('exit', (code: string) => {
             console.log(`Server exit signal from stopServer with code ${code}`);
             server.process = null;
+            server.status = 'offline';
         });
 
         return { message: "Minecraft server is stopping." };

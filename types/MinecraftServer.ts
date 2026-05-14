@@ -1,10 +1,13 @@
 import {environment} from "~/core/globals";
 
+export type ServerStatus = 'online' | 'offline' | 'starting' | 'stopping';
+
 export interface MinecraftServer {
     name: string;
     version: string;
     jarName: string;
     maxMemory: number;
+    status: ServerStatus;
     process: any;
 }
 
