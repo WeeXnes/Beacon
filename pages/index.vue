@@ -28,13 +28,13 @@
       />
       <StatCard 
         title="Memory Usage" 
-        value="4.2 GB" 
+        :value="`${systemStats.memory.used} / ${systemStats.memory.total} GB`" 
         icon="material-symbols:memory-rounded" 
         color="warning" 
       />
       <StatCard 
         title="CPU Usage" 
-        value="12%" 
+        :value="`${systemStats.cpu.percent}%`" 
         icon="material-symbols:settings-input-component-rounded" 
         color="info" 
       />
@@ -135,9 +135,21 @@ import type { MinecraftServer } from "~/types/MinecraftServer";
 import axios from 'axios';
 
 const { servers, loading, startServer, stopServer, fetchServers } = useServers()
+const { stats: systemStats, fetchStats } = useSystemStats()
 
 const onlineCount = computed(() => servers.value.filter(s => s.status === 'online').length)
 const offlineCount = computed(() => servers.value.filter(s => s.status === 'offline').length)
+
+let statsInterval: NodeJS.Timeout
+
+onMounted(() => {
+  fetchStats()
+  statsInterval = setInterval(fetchStats, 5000)
+})
+
+onUnmounted(() => {
+  clearInterval(statsInterval)
+})
 
 const addDialog = reactive({
   newServer: {

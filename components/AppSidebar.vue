@@ -29,10 +29,17 @@
         class="flex items-center gap-4 px-3 py-3 rounded-xl transition-all hover:bg-base-content/5 group"
         active-class="bg-base-content/10 text-primary border-l-4 border-primary rounded-l-none"
       >
-        <div class="relative flex items-center justify-center shrink-0">
-          <Icon name="mdi:minecraft" class="text-2xl" />
+        <div v-if="collapsed" class="relative flex items-center justify-center shrink-0 w-full">
+          <span 
+            class="w-3 h-3 rounded-full"
+            :class="{
+              'bg-success': server.status === 'online',
+              'bg-error': server.status === 'offline',
+              'bg-warning animate-pulse': ['starting', 'stopping'].includes(server.status)
+            }"
+          ></span>
         </div>
-        <div v-if="!collapsed" class="flex items-center gap-2 min-w-0">
+        <div v-else class="flex items-center gap-3 min-w-0">
           <span 
             class="w-2 h-2 rounded-full shrink-0"
             :class="{
