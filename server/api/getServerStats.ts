@@ -1,6 +1,7 @@
 import { getServerByName } from "~/types/MinecraftServer";
 import pidusage from 'pidusage';
 import { consola } from 'consola';
+import os from 'os';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -17,10 +18,13 @@ export default defineEventHandler(async (event) => {
 
     try {
         const stats = await pidusage(server.pid);
+        const numCores = os.cpus().length;
         
-        // Update local state if needed (though it's better to just return it)
+        // Normalize CPU usage by cores
+        const normalizedCpu = Math.round(stats.cpu / numCores);
+        
         server.stats = {
-            cpu: Math.round(stats.cpu),
+            cpu: normalizedCpu,
             memory: stats.memory
         };
 

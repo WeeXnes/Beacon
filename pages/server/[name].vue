@@ -82,8 +82,21 @@
               <div class="w-3 h-3 rounded-full bg-warning/50"></div>
               <div class="w-3 h-3 rounded-full bg-success/50"></div>
             </div>
-            <span class="text-xs font-mono text-white/40 uppercase tracking-widest">Live Terminal</span>
-            <button @click="clearLogs" class="text-xs text-white/40 hover:text-white transition-colors">Clear</button>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-mono text-white/40 uppercase tracking-widest">Live Terminal</span>
+              <div 
+                class="badge badge-xs cursor-pointer hover:opacity-80 transition-opacity" 
+                :class="isLive ? 'badge-success' : 'badge-error'"
+                @click="reconnect"
+                title="Click to reconnect"
+              >
+                {{ isLive ? 'LIVE' : 'OFFLINE' }}
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <button @click="reconnect" v-if="!isLive" class="text-xs text-primary hover:text-primary-focus transition-colors">Reconnect</button>
+              <button @click="clearLogs" class="text-xs text-white/40 hover:text-white transition-colors">Clear</button>
+            </div>
           </div>
           <div ref="terminal" class="h-[400px] overflow-y-auto p-6 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-white/10">
             <div v-for="(line, i) in logs" :key="i" class="flex gap-4 group">
@@ -164,7 +177,7 @@ const route = useRoute()
 const router = useRouter()
 const serverName = route.params.name as string
 const { servers, startServer, stopServer } = useServers()
-const { logs, fetchLogs, sendCommand } = useConsole(serverName)
+const { logs, isLive, fetchLogs, sendCommand, reconnect } = useConsole(serverName)
 
 const server = computed(() => servers.value.find(s => s.name === serverName))
 const activeTab = ref('console')

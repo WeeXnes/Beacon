@@ -15,16 +15,29 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!server.process) {
-        consola.warn(`[CMD] ⚠️ Command skipped: Server "${name}" is not running`);
+        consola.warn(`[CMD] ⚠️ Command failed: Server "${name}" process handle is missing (likely orphaned by panel restart)`);
         throw createError({
             statusCode: 400,
-            statusMessage: "Server is not running",
+            statusMessage: "Server process handle missing. Please restart the server through the panel to regain console control.",
+        });
+    }
+
+    if (!server.process.stdin || !server.process.stdin.writable) {
+        consola.error(`[CMD] ❌ Command failed: Server "${name}" stdin is not writable`);
+        throw createError({
+            statusCode: 500,
+            statusMessage: "Server input stream is closed.",
         });
     }
 
     try {
         consola.info(`[CMD] 💬 [${name}] Sending command: ${command}`);
-        server.process.stdin.write(`${command}\n`);
+        const result = server.process.stdin.write(`${command}\n`);
+        
+        if (!result) {
+            consola.warn(`[CMD] ⚠️ [${name}] Command was buffered (stdin.write returned false)`);
+        }
+        
         return { success: true };
     } catch (error: any) {
         consola.error(`[CMD] 🔥 Error sending command to "${name}":`, error.message);

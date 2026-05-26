@@ -36,6 +36,8 @@ export default defineEventHandler(async (event) => {
 
         const subprocess = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
             cwd: getServerDirectory(server),
+            stdin: 'pipe',
+            buffer: false,
         });
 
         server.process = subprocess;
