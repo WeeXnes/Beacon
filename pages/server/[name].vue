@@ -116,47 +116,7 @@
       </div>
 
       <div v-if="activeTab === 'files'">
-        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
-          <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-               <h3 class="font-bold">File Manager</h3>
-               <div class="text-xs font-mono bg-base-300 px-3 py-1 rounded-lg text-base-content/50">/{{ currentPath }}</div>
-            </div>
-            <button v-if="currentPath" @click="goUp" class="btn btn-ghost btn-sm rounded-xl gap-2">
-              <Icon name="material-symbols:arrow-upward" /> Back
-            </button>
-          </div>
-          <div class="p-4">
-            <div class="grid grid-cols-1 divide-y divide-base-content/5">
-              <div 
-                v-for="file in files" 
-                :key="file.name"
-                @click="file.isDirectory ? navigateToDir(file.name) : null"
-                class="flex items-center justify-between p-4 hover:bg-base-content/5 transition-colors cursor-pointer group rounded-xl"
-              >
-                <div class="flex items-center gap-4">
-                  <Icon 
-                    :name="file.isDirectory ? 'material-symbols:folder-rounded' : 'material-symbols:description-outline-rounded'" 
-                    :class="file.isDirectory ? 'text-warning' : 'text-base-content/40'"
-                    class="text-2xl"
-                  />
-                  <div>
-                    <p class="font-medium group-hover:text-primary transition-colors">{{ file.name }}</p>
-                    <p class="text-[10px] text-base-content/30 uppercase font-bold tracking-wider">{{ file.isDirectory ? 'Folder' : 'File' }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-4">
-                  <button class="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Icon name="material-symbols:download-rounded" />
-                  </button>
-                  <button class="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-100 transition-opacity text-error">
-                    <Icon name="material-symbols:delete-outline-rounded" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <FileManager :server-name="serverName" />
       </div>
 
       <div v-if="activeTab === 'settings'">
@@ -205,9 +165,6 @@ const activeTab = ref('console')
 const commandInput = ref('')
 const terminal = ref<HTMLElement | null>(null)
 const properties = ref<any>({})
-
-const files = ref<any[]>([])
-const currentPath = ref('')
 
 const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
@@ -270,32 +227,6 @@ const getProperties = async () => {
   }
 }
 
-const listFiles = async () => {
-  try {
-    files.value = await $fetch('/api/listFiles', {
-      method: 'POST',
-      body: { name: serverName, path: currentPath.value },
-      headers: {
-        Authorization: `Bearer ${useCookie('token').value}`
-      }
-    })
-  } catch (error) {
-    console.error('Failed to list files:', error)
-  }
-}
-
-const navigateToDir = (dirName: string) => {
-  currentPath.value = currentPath.value ? `${currentPath.value}/${dirName}` : dirName
-  listFiles()
-}
-
-const goUp = () => {
-  const parts = currentPath.value.split('/')
-  parts.pop()
-  currentPath.value = parts.join('/')
-  listFiles()
-}
-
 const saveProperties = async () => {
   try {
     await $fetch('/api/setProperties', {
@@ -329,17 +260,14 @@ const handleDelete = async () => {
   }
 }
 
-let intervalId: NodeJS.Timeout
-
 onMounted(async () => {
   await getProperties()
-  await listFiles()
   await fetchJavaVersions()
-  intervalId = setInterval(fetchLogs, 1000)
+  fetchLogs() // This starts the WS connection in useConsole
 })
 
 onUnmounted(() => {
-  clearInterval(intervalId)
+  // WS cleanup is handled in useConsole's onBeforeUnmount
 })
 
 watch(logs, () => {

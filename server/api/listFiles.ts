@@ -25,12 +25,28 @@ export default defineEventHandler(async (event) => {
     try {
         consola.info(`[FILES] 📂 [${name}] Listing directory: ${subPath || '/'}`);
         const entries = await fs.readdir(targetDir, { withFileTypes: true });
-        return entries.map(entry => ({
-            name: entry.name,
-            isDirectory: entry.isDirectory(),
-            size: 0,
-            lastModified: new Date()
+        
+        const files = await Promise.all(entries.map(async (entry) => {
+            const entryPath = path.join(targetDir, entry.name);
+            try {
+                const stats = await fs.stat(entryPath);
+                return {
+                    name: entry.name,
+                    isDirectory: entry.isDirectory(),
+                    size: stats.size,
+                    lastModified: stats.mtime
+                };
+            } catch (e) {
+                return {
+                    name: entry.name,
+                    isDirectory: entry.isDirectory(),
+                    size: 0,
+                    lastModified: new Date(0)
+                };
+            }
         }));
+
+        return files;
     } catch (error: any) {
         consola.error(`[FILES] 🔥 Error listing "${targetDir}":`, error.message);
         throw createError({ statusCode: 500, statusMessage: error.message });

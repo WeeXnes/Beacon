@@ -1,4 +1,3 @@
-import {getServerByName} from "~/types/MinecraftServer";
 import { getServerByName } from "~/types/MinecraftServer";
 import { consola } from 'consola';
 import { saveJsonFile } from "~/util/jsonLoader";
@@ -21,13 +20,13 @@ export default defineEventHandler(async (event) => {
     try {
         server.status = 'stopping';
         consola.info(`[SERVER] 🛑 Stopping server "${server.name}"...`);
-
+        
         if (server.process) {
             server.process.stdin.write('stop\n');
         } else if (server.pid) {
             consola.warn(`[SERVER] ⚠️ No process handle for "${server.name}", sending SIGTERM to PID ${server.pid}`);
             process.kill(server.pid, 'SIGTERM');
-
+            
             // Clean up manually since there's no process 'exit' listener
             server.pid = undefined;
             server.status = 'offline';
@@ -38,7 +37,5 @@ export default defineEventHandler(async (event) => {
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Error stopping "${server_name}":`, error.message);
         return { message: "Failed to stop Minecraft server.", error: error.message };
-    }
-});
     }
 });
