@@ -93,10 +93,6 @@
                 {{ isLive ? 'LIVE' : 'OFFLINE' }}
               </div>
             </div>
-            <div class="flex gap-4">
-              <button @click="reconnect" v-if="!isLive" class="text-xs text-primary hover:text-primary-focus transition-colors">Reconnect</button>
-              <button @click="clearLogs" class="text-xs text-white/40 hover:text-white transition-colors">Clear</button>
-            </div>
           </div>
           <div ref="terminal" class="h-[400px] overflow-y-auto p-6 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-white/10">
             <div v-for="(line, i) in logs" :key="i" class="flex gap-4 group">

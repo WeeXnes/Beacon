@@ -16,8 +16,10 @@ export const useConsole = (serverName: string) => {
       });
       
       if (response.logs) {
-        const newLines = response.logs.split('\n').map(line => line.replace('\r', ''));
-        // Only update if there's actually a change to prevent cursor flickering
+        const newLines = response.logs.split('\n')
+            .map(line => line.replace('\r', '').trim())
+            .filter(line => line.length > 0);
+        
         if (JSON.stringify(newLines.slice(-10)) !== JSON.stringify(logs.value.slice(-10))) {
             logs.value = newLines;
         }
@@ -42,38 +44,37 @@ export const useConsole = (serverName: string) => {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    // URL Encoding the name is important for spaces/special characters
     const wsUrl = `${protocol}//${host}/ws/logs?name=${encodeURIComponent(serverName)}`;
     
     console.log(`[WS] Connecting to ${wsUrl}`);
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-        // isLive will be set by the 'status' message from server
-        console.log(`[WS] WebSocket Handshake for ${serverName} established`);
+        isLive.value = true;
+        console.log(`[WS] WebSocket for ${serverName} established`);
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
     };
 
     ws.onmessage = (event) => {
         try {
             const message = JSON.parse(event.data);
             if (message.type === 'log') {
-                const newLines = message.data.split('\n').map((line: string) => line.replace('\r', ''));
-                logs.value = [...logs.value, ...newLines].slice(-500);
+                const newLines = message.data.split('\n')
+                    .map((line: string) => line.replace('\r', '').trim())
+                    .filter((line: string) => line.length > 0);
+                
+                if (newLines.length > 0) {
+                    logs.value = [...logs.value, ...newLines].slice(-500);
+                }
             } else if (message.type === 'status' && message.data === 'connected') {
                 isLive.value = true;
-                console.log(`[WS] Live stream active for ${serverName}`);
-                // Stop polling if we are live
-                if (pollTimer) {
-                    clearInterval(pollTimer);
-                    pollTimer = null;
-                }
             } else if (message.type === 'ping') {
-                // Heartbeat from server
                 if (!isLive.value) isLive.value = true;
             }
-        } catch (e) {
-            console.error(`[WS] Message parse error:`, e);
-        }
+        } catch (e) {}
     };
 
     ws.onclose = (event) => {
@@ -101,7 +102,6 @@ export const useConsole = (serverName: string) => {
           Authorization: `Bearer ${useCookie('token').value}`
         }
       });
-      // Immediate poll for feedback if not live
       if (!isLive.value) setTimeout(fetchLogs, 500);
     } catch (error) {
       console.error(`[CONSOLE] Command failed for ${serverName}:`, error);
