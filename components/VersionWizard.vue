@@ -5,6 +5,7 @@ const step = ref(1);
 const loading = ref(false);
 const error = ref('');
 
+const project = ref('paper');
 const versions = ref<string[]>([]);
 const selectedVersion = ref('');
 const serverName = ref('');
@@ -23,19 +24,21 @@ const fetchJavaVersions = async () => {
   }
 };
 
-const fetchVersions = async () => {
+const selectProject = async (p: string) => {
+  project.value = p;
   loading.value = true;
+  error.value = '';
   try {
-    const data = await $fetch<{ versions: string[] }>('/api/getVersions', {
+    const data = await $fetch<{ versions: string[] }>(`/api/getVersions?project=${p}`, {
         headers: { Authorization: `Bearer ${useCookie('token').value}` }
     });
     versions.value = data.versions;
     if (versions.value.length > 0) {
       selectedVersion.value = versions.value[0];
     }
-    step.value = 2; // Step 2 is PaperMC config
+    step.value = 2; // Step 2 is Config
   } catch (e: any) {
-    error.value = 'Failed to fetch versions.';
+    error.value = `Failed to fetch versions for ${p}.`;
   } finally {
     loading.value = false;
   }
@@ -94,7 +97,7 @@ const install = async () => {
       body: {
         name: serverName.value,
         version: selectedVersion.value,
-        project: 'paper',
+        project: project.value,
         maxMemory: maxMemory.value
       },
       headers: { Authorization: `Bearer ${useCookie('token').value}` }
@@ -124,37 +127,54 @@ onMounted(() => {
       </div>
 
       <!-- Step 1: Select Type -->
-      <div v-if="step === 1" class="space-y-6">
-        <p class="text-base-content/60">Choose the type of Minecraft server you want to install.</p>
-        <div class="grid grid-cols-1 gap-3">
-          <button @click="fetchVersions" class="btn btn-outline btn-lg h-24 flex flex-col gap-1 items-start px-6 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+      <div v-if="step === 1" class="space-y-4">
+        <p class="text-base-content/60 text-sm">Choose your preferred server software.</p>
+        <div class="grid grid-cols-1 gap-2">
+          <!-- PaperMC -->
+          <button @click="selectProject('paper')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
             <div class="flex items-center gap-2 text-primary font-bold">
               <Icon name="simple-icons:papermc" />
               PaperMC
             </div>
-            <span class="text-xs text-base-content/40 font-normal">High-performance server with plugin support.</span>
+            <span class="text-[10px] text-base-content/40 font-normal">High-performance with plugin support.</span>
           </button>
           
-          <button @click="step = 3" class="btn btn-outline btn-lg h-24 flex flex-col gap-1 items-start px-6 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
-            <div class="flex items-center gap-2 text-primary font-bold">
-              <Icon name="lucide:upload" />
-              Manual JAR Upload
+          <!-- Fabric -->
+          <button @click="selectProject('fabric')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+            <div class="flex items-center gap-2 text-info font-bold">
+              <Icon name="simple-icons:fabricmc" />
+              Fabric
             </div>
-            <span class="text-xs text-base-content/40 font-normal">Upload your own server.jar or paper.jar file.</span>
+            <span class="text-[10px] text-base-content/40 font-normal">Lightweight modding for modern versions.</span>
           </button>
 
-          <div class="btn btn-outline btn-lg h-24 flex flex-col gap-1 items-start px-6 rounded-2xl border-base-content/10 opacity-50 cursor-not-allowed">
-             <div class="flex items-center gap-2 font-bold">
-              <Icon name="mdi:minecraft" />
-              Vanilla (Coming Soon)
+          <!-- Forge -->
+          <button @click="selectProject('forge')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+            <div class="flex items-center gap-2 text-warning font-bold">
+              <Icon name="mdi:hammer-wrench" />
+              Forge
             </div>
-            <span class="text-xs font-normal">Official Minecraft server software.</span>
-          </div>
+            <span class="text-[10px] text-base-content/40 font-normal">The classic modding platform.</span>
+          </button>
+
+          <!-- Manual -->
+          <button @click="step = 3" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+            <div class="flex items-center gap-2 text-success font-bold">
+              <Icon name="lucide:upload" />
+              Manual Upload
+            </div>
+            <span class="text-[10px] text-base-content/40 font-normal">Upload your own custom server.jar file.</span>
+          </button>
         </div>
       </div>
 
-      <!-- Step 2: PaperMC Configure -->
+      <!-- Step 2: Configure Auto-Install -->
       <div v-if="step === 2" class="space-y-4">
+        <div class="flex items-center gap-2 mb-2">
+            <div class="badge badge-primary uppercase font-bold text-[10px]">{{ project }}</div>
+            <span class="text-xs opacity-50">Configuration</span>
+        </div>
+
         <div class="form-control w-full">
           <label class="label"><span class="label-text font-bold">Server Name</span></label>
           <input v-model="serverName" type="text" placeholder="My Awesome Server" class="input input-bordered rounded-xl bg-base-200/50 border-base-content/5" />
@@ -231,7 +251,9 @@ onMounted(() => {
 
       <div v-if="loading && step >= 2" class="absolute inset-0 bg-base-100/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-3xl">
          <div class="loading loading-infinity loading-lg text-primary"></div>
-         <p class="mt-4 font-bold animate-pulse">{{ step === 2 ? 'Downloading JAR file...' : 'Uploading JAR file...' }}</p>
+         <p class="mt-4 font-bold animate-pulse">
+            {{ step === 2 && project === 'forge' ? 'Running Forge Installer...' : (step === 2 ? 'Downloading JAR file...' : 'Uploading JAR file...') }}
+         </p>
          <p class="text-xs text-base-content/40 mt-1">This may take a minute depending on your connection.</p>
       </div>
     </div>

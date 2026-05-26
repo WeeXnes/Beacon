@@ -5,8 +5,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { consola } from 'consola';
 import axios from 'axios';
+import { execa } from 'express-execa'; // Wait, it's just 'execa' in package.json
 
 export default defineEventHandler(async (event) => {
+    // We need 'execa' from the top level
+    const { execa } = await import('execa');
+
     const body = await readBody(event);
     const { name, version, project, maxMemory } = body;
 
@@ -22,23 +26,53 @@ export default defineEventHandler(async (event) => {
     try {
         consola.info(`[INSTALL] 🛠️ Starting installation for "${name}" (${project} ${version})`);
 
-        // 1. Get latest build info
-        const buildInfo = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}`);
-        const latestBuild = buildInfo.builds[buildInfo.builds.length - 1];
-        
-        const buildDetail = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}`);
-        const downloadName = buildDetail.downloads.application.name;
-        const downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${downloadName}`;
-
-        // 2. Setup directory
         const serverDir = path.resolve(environment.paths.servers, name);
         if (!fs.existsSync(serverDir)) {
             fs.mkdirSync(serverDir, { recursive: true });
         }
 
-        // 3. Download JAR
-        consola.info(`[INSTALL] 📥 Downloading ${downloadName}...`);
-        const jarPath = path.join(serverDir, downloadName);
+        let downloadUrl = '';
+        let downloadName = '';
+        let jarName = '';
+
+        if (project === 'paper') {
+            const buildInfo = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}`);
+            const latestBuild = buildInfo.builds[buildInfo.builds.length - 1];
+            const buildDetail = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}`);
+            downloadName = buildDetail.downloads.application.name;
+            downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${downloadName}`;
+            jarName = downloadName;
+        } else if (project === 'fabric') {
+            const loaders = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/loader');
+            const installers = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/installer');
+            const loaderVersion = loaders[0].version; // Latest loader
+            const installerVersion = installers[0].version; // Latest installer
+            
+            downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/${loaderVersion}/${installerVersion}/server/jar`;
+            downloadName = `fabric-server-launcher.jar`;
+            jarName = downloadName;
+        } else if (project === 'forge') {
+            const promos = await $fetch<any>('https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json');
+            let forgeVersion = promos.promos[`${version}-recommended`] || promos.promos[`${version}-latest`];
+            
+            if (!forgeVersion) {
+                // Fallback to searching promos for this MC version if exact key not found
+                const keys = Object.keys(promos.promos).filter(k => k.startsWith(version));
+                forgeVersion = promos.promos[keys[0]];
+            }
+
+            if (!forgeVersion) throw new Error(`No Forge version found for MC ${version}`);
+
+            const fullVersion = `${version}-${forgeVersion}`;
+            downloadName = `forge-${fullVersion}-installer.jar`;
+            // URL format: https://maven.minecraftforge.net/net/minecraftforge/forge/{fullVersion}/forge-{fullVersion}-installer.jar
+            downloadUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${fullVersion}/forge-${fullVersion}-installer.jar`;
+            jarName = ''; // Will be determined after installation
+        }
+
+        // Download the file
+        consola.info(`[INSTALL] 📥 Downloading ${downloadName} from ${downloadUrl}...`);
+        const downloadPath = path.join(serverDir, downloadName);
         
         const response = await axios({
             method: 'get',
@@ -46,7 +80,7 @@ export default defineEventHandler(async (event) => {
             responseType: 'stream'
         });
 
-        const writer = fs.createWriteStream(jarPath);
+        const writer = fs.createWriteStream(downloadPath);
         response.data.pipe(writer);
 
         await new Promise((resolve, reject) => {
@@ -54,18 +88,48 @@ export default defineEventHandler(async (event) => {
             writer.on('error', reject);
         });
 
-        // 4. Register server in settings
+        // Special handling for Forge (Run installer)
+        if (project === 'forge') {
+            consola.info(`[INSTALL] 🔨 Running Forge installer...`);
+            // Run: java -jar installer.jar --installServer
+            try {
+                await execa('java', ['-jar', downloadName, '--installServer'], { cwd: serverDir });
+                consola.info(`[INSTALL] ✅ Forge files generated.`);
+                
+                // Try to find the server jar. In newer versions it's often 'run.sh/bat' or a specific jar.
+                // For older versions it's forge-xxx-universal.jar or similar.
+                const files = fs.readdirSync(serverDir);
+                const forgeJar = files.find(f => f.includes('forge') && f.endsWith('.jar') && !f.includes('installer'));
+                
+                if (forgeJar) {
+                    jarName = forgeJar;
+                } else {
+                    // Modern forge uses a library-based launch. We'll look for a 'user_jvm_args.txt' or similar marker.
+                    // For simplicity, we'll assume the user might need to specify the jar if not found, 
+                    // but usually 'forge-xxx.jar' is present.
+                    jarName = downloadName.replace('-installer', ''); // Best guess
+                }
+                
+                // Cleanup installer
+                fs.unlinkSync(downloadPath);
+            } catch (err: any) {
+                consola.error(`[INSTALL] ❌ Forge installation failed:`, err.message);
+                throw new Error(`Forge installer failed: ${err.message}`);
+            }
+        }
+
+        // Register server in settings
         environment.settings.servers.push({
             name,
             version: `${project} ${version}`,
-            jarName: downloadName,
+            jarName: jarName,
             maxMemory: maxMemory || 2,
             status: 'offline',
             process: null
         });
         saveJsonFile();
 
-        // 5. Auto-accept EULA
+        // Auto-accept EULA
         const eulaPath = path.join(serverDir, 'eula.txt');
         fs.writeFileSync(eulaPath, 'eula=true');
 
