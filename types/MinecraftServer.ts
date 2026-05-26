@@ -10,6 +10,7 @@ export interface MinecraftServer {
     status: ServerStatus;
     process: any;
     javaVersionName?: string;
+    pid?: number;
 }
 
 

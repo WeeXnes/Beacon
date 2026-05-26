@@ -17,7 +17,6 @@ export function loadJsonFile(){
         }
 
         environment.settings.servers.forEach(server => {
-            server.status = 'offline';
             server.process = null;
         });
 

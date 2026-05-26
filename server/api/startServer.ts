@@ -2,6 +2,7 @@ import {getJarPath, getServerByName, getServerDirectory} from "~/types/Minecraft
 import {execa} from "execa";
 import { consola } from 'consola';
 import { environment } from '~/core/globals';
+import { saveJsonFile } from "~/util/jsonLoader";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -33,13 +34,18 @@ export default defineEventHandler(async (event) => {
 
         consola.start(`[SERVER] 🚀 Starting server "${server.name}" using ${javaBinary} (${xmsArg}, ${xmxArg})`);
 
-        server.process = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
+        const subprocess = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
             cwd: getServerDirectory(server),
         });
 
+        server.process = subprocess;
+        server.pid = subprocess.pid;
         server.status = 'starting';
+        
+        // Save PID to persistent storage
+        saveJsonFile();
 
-        server.process.stdout.on('data', (data: Buffer) => {
+        subprocess.stdout.on('data', (data: Buffer) => {
             const line = data.toString();
             if (line.includes('Done') || 
                 line.includes('For help, type "help"') || 
@@ -50,7 +56,7 @@ export default defineEventHandler(async (event) => {
             }
         });
 
-        server.process.stderr.on('data', (data: Buffer) => {
+        subprocess.stderr.on('data', (data: Buffer) => {
             const line = data.toString().trim();
             if (line.includes('Advanced terminal features are not available')) {
                 consola.warn(`[SERVER] ⚠️ [${server.name}] Terminal: ${line}`);
@@ -59,10 +65,12 @@ export default defineEventHandler(async (event) => {
             }
         });
 
-        server.process.on('exit', (code: number) => {
+        subprocess.on('exit', (code: number) => {
             consola.info(`[SERVER] ⏹️ Server "${server.name}" exited with code ${code}`);
             server.process = null;
+            server.pid = undefined;
             server.status = 'offline';
+            saveJsonFile();
         });
 
         return { message: "Minecraft server started." };

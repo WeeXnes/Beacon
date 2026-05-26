@@ -1,6 +1,7 @@
 export const useConsole = (serverName: string) => {
   const logs = useState<string[]>(`logs-${serverName}`, () => []);
   const isAutoScrolling = ref(true);
+  let ws: WebSocket | null = null;
 
   const fetchLogs = async () => {
     try {
@@ -13,15 +14,41 @@ export const useConsole = (serverName: string) => {
       });
       
       if (response.logs) {
-        const newLogs = response.logs.split('\n').filter(line => line.trim() !== '');
-        // Only update if there are changes to avoid flickering
-        if (JSON.stringify(newLogs.slice(-50)) !== JSON.stringify(logs.value.slice(-50))) {
-          logs.value = newLogs;
-        }
+        logs.value = response.logs.split('\n').filter(line => line.trim() !== '');
       }
+      
+      connectWebSocket();
     } catch (error) {
-      console.error(`Failed to fetch logs for ${serverName}:`, error);
+      console.error(`Failed to fetch initial logs for ${serverName}:`, error);
     }
+  };
+
+  const connectWebSocket = () => {
+    if (process.server) return;
+    
+    if (ws) {
+        ws.close();
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    ws = new WebSocket(`${protocol}//${host}/ws/logs?name=${serverName}`);
+
+    ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'log') {
+            const newLines = message.data.split('\n').filter((line: string) => line.trim() !== '');
+            logs.value = [...logs.value, ...newLines].slice(-500); // Keep last 500 lines
+        }
+    };
+
+    ws.onclose = () => {
+        console.log(`WebSocket closed for ${serverName}`);
+    };
+
+    ws.onerror = (error) => {
+        console.error(`WebSocket error for ${serverName}:`, error);
+    };
   };
 
   const sendCommand = async (command: string) => {
@@ -37,6 +64,12 @@ export const useConsole = (serverName: string) => {
       console.error(`Failed to send command to ${serverName}:`, error);
     }
   };
+
+  onBeforeUnmount(() => {
+    if (ws) {
+        ws.close();
+    }
+  });
 
   return {
     logs,
