@@ -5,11 +5,11 @@ export default defineEventHandler(async (event) => {
     const project = query.project as string || 'paper';
 
     try {
-        if (project === 'paper') {
-            consola.info('[API] Fetching versions from PaperMC...');
-            const projectData = await $fetch<any>('https://api.papermc.io/v2/projects/paper');
+        if (project === 'paper' || project === 'folia') {
+            consola.info(`[API] Fetching versions from ${project}...`);
+            const projectData = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}`);
             return {
-                project: 'paper',
+                project: project,
                 versions: projectData.versions.reverse()
             };
         } 

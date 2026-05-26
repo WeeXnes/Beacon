@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         let downloadName = '';
         let jarName = '';
 
-        if (project === 'paper') {
+        if (project === 'paper' || project === 'folia') {
             const buildInfo = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}`);
             const latestBuild = buildInfo.builds[buildInfo.builds.length - 1];
             const buildDetail = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}`);

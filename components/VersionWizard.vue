@@ -138,6 +138,15 @@ onMounted(() => {
             </div>
             <span class="text-[10px] text-base-content/40 font-normal">High-performance with plugin support.</span>
           </button>
+
+          <!-- Folia -->
+          <button @click="selectProject('folia')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+            <div class="flex items-center gap-2 text-secondary font-bold">
+              <Icon name="lucide:zap" />
+              Folia
+            </div>
+            <span class="text-[10px] text-base-content/40 font-normal">Multi-threaded regionized Paper fork.</span>
+          </button>
           
           <!-- Fabric -->
           <button @click="selectProject('fabric')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
