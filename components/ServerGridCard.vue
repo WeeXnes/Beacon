@@ -27,13 +27,21 @@
 
       <div class="grid grid-cols-2 gap-4 my-2">
         <div class="bg-base-300/50 rounded-xl p-3">
-          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Memory</p>
+          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Max RAM</p>
           <p class="font-bold text-sm">{{ server.maxMemory }}GB</p>
         </div>
         <div class="bg-base-300/50 rounded-xl p-3">
-          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Players</p>
-          <p class="font-bold text-sm">-- / --</p>
+          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">CPU Usage</p>
+          <p class="font-bold text-sm">{{ server.status === 'online' && server.stats ? server.stats.cpu + '%' : '--' }}</p>
         </div>
+      </div>
+
+      <div v-if="server.status === 'online' && server.stats" class="space-y-2">
+        <div class="flex justify-between text-[10px] uppercase font-bold text-base-content/40">
+          <span>Real-time RAM</span>
+          <span>{{ formatMemory(server.stats.memory) }}</span>
+        </div>
+        <progress class="progress progress-primary w-full h-1.5" :value="server.stats.memory" :max="server.maxMemory * 1024 * 1024 * 1024"></progress>
       </div>
 
       <div class="flex items-center gap-2 mt-auto">
@@ -68,4 +76,12 @@ defineProps<{
 }>()
 
 defineEmits(['start', 'stop'])
+
+const formatMemory = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 </script>

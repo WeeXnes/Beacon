@@ -21,51 +21,57 @@ export default defineWebSocketHandler({
 
         const logPath = getLogsPath(server);
         
-        // Initial check for log file
-        if (!fs.existsSync(logPath)) {
-            peer.send(JSON.stringify({ type: 'info', message: 'Log file not found yet.' }));
-        }
-
-        // We use a watcher to detect changes
+        let watcher: fs.FSWatcher | null = null;
         let currentSize = 0;
-        try {
-            if (fs.existsSync(logPath)) {
+
+        const setupWatcher = () => {
+            if (!fs.existsSync(logPath)) {
+                setTimeout(setupWatcher, 2000);
+                return;
+            }
+
+            try {
                 currentSize = fs.statSync(logPath).size;
-            }
-        } catch (e) {}
-
-        const watcher = fs.watch(logPath, (event) => {
-            if (event === 'change') {
-                try {
-                    const stats = fs.statSync(logPath);
-                    if (stats.size > currentSize) {
-                        const stream = fs.createReadStream(logPath, {
-                            start: currentSize,
-                            end: stats.size
-                        });
-                        stream.on('data', (chunk) => {
-                            peer.send(JSON.stringify({ type: 'log', data: chunk.toString() }));
-                        });
-                        currentSize = stats.size;
-                    } else if (stats.size < currentSize) {
-                        // File was truncated (e.g. server restart)
-                        currentSize = 0;
+                
+                // use watchFile for better cross-platform reliability with logs
+                fs.watchFile(logPath, { interval: 500 }, (curr, prev) => {
+                    if (curr.mtime !== prev.mtime) {
+                        try {
+                            const stats = fs.statSync(logPath);
+                            if (stats.size > currentSize) {
+                                const stream = fs.createReadStream(logPath, {
+                                    start: currentSize,
+                                    end: stats.size
+                                });
+                                stream.on('data', (chunk) => {
+                                    peer.send(JSON.stringify({ type: 'log', data: chunk.toString() }));
+                                });
+                                currentSize = stats.size;
+                            } else if (stats.size < currentSize) {
+                                currentSize = 0;
+                            }
+                        } catch (e) {}
                     }
-                } catch (e) {
-                    console.error('Error reading log file in WS:', e);
-                }
+                });
+                (peer as any)._watching = true;
+            } catch (e) {
+                console.error(`[WS] Failed to watch ${logPath}:`, e);
             }
-        });
+        };
 
-        // Store watcher on peer context to close it later
-        (peer as any)._watcher = watcher;
+        setupWatcher();
         
         console.log(`[WS] Log stream opened for ${serverName}`);
     },
     close(peer) {
-        if ((peer as any)._watcher) {
-            (peer as any)._watcher.close();
-            console.log(`[WS] Log stream closed`);
+        const url = new URL(peer.url, 'http://localhost');
+        const serverName = url.searchParams.get('name');
+        if (serverName) {
+            const server = getServerByName(serverName);
+            if (server) {
+                fs.unwatchFile(getLogsPath(server));
+                console.log(`[WS] Log stream closed for ${serverName}`);
+            }
         }
     },
     error(peer, error) {

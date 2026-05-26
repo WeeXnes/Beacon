@@ -24,30 +24,45 @@ export const useConsole = (serverName: string) => {
   };
 
   const connectWebSocket = () => {
-    if (process.server) return;
+    if (!process.client) return;
     
     if (ws) {
+        console.log(`[WS] Closing existing connection for ${serverName}`);
         ws.close();
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    ws = new WebSocket(`${protocol}//${host}/ws/logs?name=${serverName}`);
+    const wsUrl = `${protocol}//${host}/ws/logs?name=${encodeURIComponent(serverName)}`;
+    
+    console.log(`[WS] Connecting to ${wsUrl}`);
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        console.log(`[WS] Connected for ${serverName}`);
+    };
 
     ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        if (message.type === 'log') {
-            const newLines = message.data.split('\n').filter((line: string) => line.trim() !== '');
-            logs.value = [...logs.value, ...newLines].slice(-500); // Keep last 500 lines
+        try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'log') {
+                const newLines = message.data.split('\n').filter((line: string) => line.trim() !== '');
+                logs.value = [...logs.value, ...newLines].slice(-500);
+            } else if (message.error) {
+                console.error(`[WS] Server error: ${message.error}`);
+            }
+        } catch (e) {
+            console.error(`[WS] Failed to parse message:`, e);
         }
     };
 
-    ws.onclose = () => {
-        console.log(`WebSocket closed for ${serverName}`);
+    ws.onclose = (event) => {
+        console.log(`[WS] Closed for ${serverName} (Code: ${event.code})`);
+        // Optionally reconnect if not closed by unmount
     };
 
     ws.onerror = (error) => {
-        console.error(`WebSocket error for ${serverName}:`, error);
+        console.error(`[WS] Error for ${serverName}:`, error);
     };
   };
 

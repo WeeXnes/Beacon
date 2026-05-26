@@ -20,7 +20,13 @@
               {{ server.status }}
             </div>
           </div>
-          <p class="text-base-content/50 font-medium">Running {{ server.version }} • {{ server.maxMemory }}GB RAM</p>
+          <p class="text-base-content/50 font-medium">
+            Running {{ server.version }} • {{ server.maxMemory }}GB RAM
+            <span v-if="server.status === 'online' && server.stats" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
+              <Icon name="lucide:cpu" class="w-4 h-4 inline mr-1" /> {{ server.stats.cpu }}%
+              <Icon name="lucide:hard-drive" class="w-4 h-4 inline ml-2 mr-1" /> {{ formatBytes(server.stats.memory) }}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -165,6 +171,14 @@ const activeTab = ref('console')
 const commandInput = ref('')
 const terminal = ref<HTMLElement | null>(null)
 const properties = ref<any>({})
+
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },

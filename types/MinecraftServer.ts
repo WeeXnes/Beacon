@@ -11,6 +11,10 @@ export interface MinecraftServer {
     process: any;
     javaVersionName?: string;
     pid?: number;
+    stats?: {
+        cpu: number;
+        memory: number;
+    };
 }
 
 
