@@ -16,6 +16,7 @@
     "axios": "^1.7.9",
     "bcryptjs": "^3.0.2",
     "daisyui": "^4.12.23",
+    "discord.js": "^14.26.4",
     "execa": "^9.5.2",
     "ini": "^5.0.0",
     "jsonwebtoken": "^9.0.2",

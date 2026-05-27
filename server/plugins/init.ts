@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {environment} from "~/core/globals";
 import {loadJsonFile, removeServerByName, saveJsonFile, createPathIfNotExists} from "~/util/jsonLoader";
+import {initDiscord, updateDiscordPresence} from "~/server/utils/discord";
 
 export default defineNitroPlugin((nitroApp) => {
     console.log("Loading config...")
@@ -29,6 +30,11 @@ export default defineNitroPlugin((nitroApp) => {
         }
     });
     saveJsonFile();
+    
+    // Initialize Discord Bot
+    initDiscord().then(() => {
+        updateDiscordPresence();
+    });
 });
 
 
