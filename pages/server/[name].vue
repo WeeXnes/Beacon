@@ -22,9 +22,12 @@
           </div>
           <p class="text-base-content/50 font-medium">
             Running {{ server.version }} • {{ server.maxMemory }}GB RAM
-            <span v-if="server.status === 'online' && server.stats" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
-              <Icon name="lucide:cpu" class="w-4 h-4 inline mr-1" /> {{ server.stats.cpu }}%
-              <Icon name="lucide:hard-drive" class="w-4 h-4 inline ml-2 mr-1" /> {{ formatBytes(server.stats.memory) }}
+            <span v-if="server.status === 'online'" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
+              <Icon name="material-symbols:group-rounded" class="w-4 h-4 inline mr-1" /> {{ server.onlinePlayers?.length || 0 }}/{{ server.maxPlayers || '--' }}
+              <span v-if="server.stats">
+                <Icon name="lucide:cpu" class="w-4 h-4 inline ml-2 mr-1" /> {{ server.stats.cpu }}%
+                <Icon name="lucide:hard-drive" class="w-4 h-4 inline ml-2 mr-1" /> {{ formatBytes(server.stats.memory) }}
+              </span>
             </span>
           </p>
         </div>

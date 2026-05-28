@@ -27,12 +27,22 @@
 
       <div class="grid grid-cols-2 gap-4 my-2">
         <div class="bg-base-300/50 rounded-xl p-3">
+          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Players</p>
+          <p class="font-bold text-sm">
+            {{ server.status === 'online' ? (server.onlinePlayers?.length || 0) : 0 }} / {{ server.maxPlayers || '--' }}
+          </p>
+        </div>
+        <div class="bg-base-300/50 rounded-xl p-3">
           <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Max RAM</p>
           <p class="font-bold text-sm">{{ server.maxMemory }}GB</p>
         </div>
         <div class="bg-base-300/50 rounded-xl p-3">
           <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">CPU Usage</p>
           <p class="font-bold text-sm">{{ server.status === 'online' && server.stats ? server.stats.cpu + '%' : '--' }}</p>
+        </div>
+        <div class="bg-base-300/50 rounded-xl p-3">
+          <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Status</p>
+          <p class="font-bold text-sm" :class="server.status === 'online' ? 'text-success' : 'text-base-content/40'">{{ server.status }}</p>
         </div>
       </div>
 

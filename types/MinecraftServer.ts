@@ -12,6 +12,7 @@ export interface MinecraftServer {
     javaVersionName?: string;
     pid?: number;
     onlinePlayers?: string[];
+    maxPlayers?: number;
     stats?: {
         cpu: number;
         memory: number;
