@@ -13,6 +13,7 @@ const maxMemory = ref(2);
 const javaVersionName = ref<string | undefined>(undefined);
 const uploadFile = ref<File | null>(null);
 const javaVersions = ref<any[]>([]);
+const includeSnapshots = ref(false);
 
 const fetchJavaVersions = async () => {
   try {
@@ -29,7 +30,7 @@ const selectProject = async (p: string) => {
   loading.value = true;
   error.value = '';
   try {
-    const data = await $fetch<{ versions: string[] }>(`/api/getVersions?project=${p}`, {
+    const data = await $fetch<{ versions: string[] }>(`/api/getVersions?project=${p}&snapshots=${includeSnapshots.value}`, {
         headers: { Authorization: `Bearer ${useCookie('token').value}` }
     });
     versions.value = data.versions;
@@ -43,6 +44,12 @@ const selectProject = async (p: string) => {
     loading.value = false;
   }
 };
+
+watch(includeSnapshots, () => {
+  if (project.value === 'vanilla' && step.value === 2) {
+    selectProject('vanilla');
+  }
+});
 
 const onFileChange = (event: any) => {
   const file = event.target.files[0];
@@ -200,6 +207,10 @@ onMounted(() => {
 
         <div class="form-control w-full">
           <label class="label"><span class="label-text font-bold">Version</span></label>
+          <div v-if="project === 'vanilla'" class="flex items-center gap-2 mb-2 px-1">
+            <input type="checkbox" v-model="includeSnapshots" class="checkbox checkbox-xs checkbox-primary" id="snapshot-toggle" />
+            <label for="snapshot-toggle" class="text-xs font-medium cursor-pointer">Include Snapshots</label>
+          </div>
           <select v-model="selectedVersion" class="select select-bordered rounded-xl bg-base-200/50 border-base-content/5">
             <option v-for="v in versions" :key="v" :value="v">{{ v }}</option>
           </select>

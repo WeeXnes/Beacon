@@ -17,12 +17,15 @@ export default defineEventHandler(async (event) => {
         if (project === 'vanilla') {
             consola.info('[API] Fetching versions from Mojang (Vanilla)...');
             const manifest = await $fetch<any>('https://launchermeta.mojang.com/mc/game/version_manifest.json');
-            const releaseVersions = manifest.versions
-                .filter((v: any) => v.type === 'release')
+            const showSnapshots = query.snapshots === 'true';
+            
+            const filteredVersions = manifest.versions
+                .filter((v: any) => v.type === 'release' || (showSnapshots && v.type === 'snapshot'))
                 .map((v: any) => v.id);
+                
             return {
                 project: 'vanilla',
-                versions: releaseVersions
+                versions: filteredVersions
             };
         }
 
