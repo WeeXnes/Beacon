@@ -28,7 +28,7 @@ export const initDiscord = async () => {
     console.log('[DISCORD] Initializing bot...');
     client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-    client.on('ready', () => {
+    client.on('clientReady', () => {
         console.log(`[DISCORD] Logged in as ${client?.user?.tag}!`);
         updateDiscordPresence();
     });
