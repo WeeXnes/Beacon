@@ -45,12 +45,35 @@ export default defineEventHandler(async (event) => {
         server.process = subprocess;
         server.pid = subprocess.pid;
         server.status = 'starting';
+        server.onlinePlayers = [];
         
         // Save PID to persistent storage
         saveJsonFile();
 
         subprocess.stdout.on('data', (data: Buffer) => {
             const line = data.toString();
+            
+            // Player Join/Leave Parsing
+            const joinMatch = line.match(/\[.*INFO\]: (.*) joined the game/);
+            const leaveMatch = line.match(/\[.*INFO\]: (.*) left the game/);
+            
+            if (joinMatch) {
+                const playerName = joinMatch[1].trim();
+                if (!server.onlinePlayers) server.onlinePlayers = [];
+                if (!server.onlinePlayers.includes(playerName)) {
+                    server.onlinePlayers.push(playerName);
+                    consola.info(`[SERVER] 👤 Player joined: ${playerName} on "${server.name}"`);
+                }
+            }
+            
+            if (leaveMatch) {
+                const playerName = leaveMatch[1].trim();
+                if (server.onlinePlayers) {
+                    server.onlinePlayers = server.onlinePlayers.filter(p => p !== playerName);
+                    consola.info(`[SERVER] 👤 Player left: ${playerName} from "${server.name}"`);
+                }
+            }
+
             if (line.includes('Done') || 
                 line.includes('For help, type "help"') || 
                 line.includes('? for help') ||
@@ -76,6 +99,7 @@ export default defineEventHandler(async (event) => {
             server.process = null;
             server.pid = undefined;
             server.status = 'offline';
+            server.onlinePlayers = [];
             saveJsonFile();
             sendDiscordMessage(`⏹️ **${server.name}** has stopped (Code: ${code})`);
             updateDiscordPresence();

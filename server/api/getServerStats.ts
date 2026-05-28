@@ -28,6 +28,18 @@ export default defineEventHandler(async (event) => {
             memory: stats.memory
         };
 
+        if (!server.statsHistory) server.statsHistory = [];
+        server.statsHistory.push({
+            cpu: normalizedCpu,
+            memory: stats.memory,
+            timestamp: Date.now()
+        });
+
+        // Keep only last 30 records
+        if (server.statsHistory.length > 30) {
+            server.statsHistory.shift();
+        }
+
         return server.stats;
     } catch (error: any) {
         // If process is gone, clean up

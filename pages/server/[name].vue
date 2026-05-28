@@ -22,12 +22,30 @@
           </div>
           <p class="text-base-content/50 font-medium">
             Running {{ server.version }} • {{ server.maxMemory }}GB RAM
-            <span v-if="server.status === 'online' && server.stats" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
-              <Icon name="lucide:cpu" class="w-4 h-4 inline mr-1" /> {{ server.stats.cpu }}%
-              <Icon name="lucide:hard-drive" class="w-4 h-4 inline ml-2 mr-1" /> {{ formatBytes(server.stats.memory) }}
-            </span>
           </p>
         </div>
+      </div>
+
+      <!-- Resource Analytics Header Sparklines -->
+      <div v-if="server.status === 'online' && server.statsHistory" class="flex gap-8 items-center bg-base-100/30 p-4 rounded-2xl border border-base-content/5">
+         <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center text-[10px] uppercase font-bold text-base-content/40">
+               <span>CPU</span>
+               <span class="text-primary">{{ server.stats?.cpu }}%</span>
+            </div>
+            <div class="w-24 h-8">
+               <StatChart :data="server.statsHistory.map(h => h.cpu)" :max="100" color="primary" />
+            </div>
+         </div>
+         <div class="flex flex-col gap-1">
+            <div class="flex justify-between items-center text-[10px] uppercase font-bold text-base-content/40">
+               <span>RAM</span>
+               <span class="text-secondary">{{ formatBytes(server.stats?.memory || 0) }}</span>
+            </div>
+            <div class="w-24 h-8">
+               <StatChart :data="server.statsHistory.map(h => h.memory)" :max="server.maxMemory * 1024 * 1024 * 1024" color="secondary" />
+            </div>
+         </div>
       </div>
 
       <div class="flex items-center gap-3 relative z-10">
@@ -114,6 +132,104 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'players'">
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[400px]">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
+            <h3 class="font-bold flex items-center gap-2">
+              <Icon name="material-symbols:group-rounded" class="text-primary" />
+              Online Players ({{ server.onlinePlayers?.length || 0 }})
+            </h3>
+          </div>
+          <div v-if="!server.onlinePlayers || server.onlinePlayers.length === 0" class="flex flex-col items-center justify-center p-20 text-center opacity-40">
+             <Icon name="material-symbols:person-off-rounded" class="text-6xl mb-4" />
+             <p class="font-bold">No players online</p>
+             <p class="text-xs">When players join, they will appear here.</p>
+          </div>
+          <div v-else class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <div v-for="player in server.onlinePlayers" :key="player" class="bg-base-100/50 p-4 rounded-2xl border border-base-content/5 flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                   <img :src="`https://minotar.net/avatar/${player}/40`" class="w-10 h-10 rounded-lg shadow-md" />
+                   <span class="font-bold">{{ player }}</span>
+                </div>
+                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button @click="sendCommand(`op ${player}`)" class="btn btn-ghost btn-xs btn-square text-warning" title="Op Player">
+                      <Icon name="material-symbols:shield-person-rounded" />
+                   </button>
+                   <button @click="sendCommand(`kick ${player}`)" class="btn btn-ghost btn-xs btn-square text-error" title="Kick Player">
+                      <Icon name="material-symbols:logout-rounded" />
+                   </button>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'marketplace'">
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[500px] flex flex-col">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
+            <div class="flex-1 max-w-md relative">
+              <Icon name="material-symbols:search-rounded" class="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" />
+              <input 
+                v-model="searchQuery" 
+                @keyup.enter="handleSearch"
+                type="text" 
+                placeholder="Search Modrinth (e.g. EssentialsX, Geyser, Lithium)..." 
+                class="input input-bordered w-full pl-12 rounded-2xl bg-base-100/50 border-base-content/5"
+              />
+            </div>
+            <div class="flex items-center gap-2 text-xs font-bold opacity-40 px-4">
+               <Icon name="simple-icons:modrinth" class="text-lg" />
+               POWERED BY MODRINTH
+            </div>
+          </div>
+
+          <div v-if="searchLoading" class="flex-1 flex items-center justify-center">
+             <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+
+          <div v-else-if="searchResults.length === 0" class="flex-1 flex flex-col items-center justify-center p-20 text-center opacity-40">
+             <Icon name="material-symbols:category-rounded" class="text-6xl mb-4" />
+             <p class="font-bold">Search for Plugins or Mods</p>
+             <p class="text-xs">Enter a keyword above to browse compatible content.</p>
+          </div>
+
+          <div v-else class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[600px]">
+             <div v-for="hit in searchResults" :key="hit.project_id" class="bg-base-100/50 p-4 rounded-2xl border border-base-content/5 flex items-start gap-4 hover:border-primary/30 transition-colors group">
+                <img :src="hit.icon_url" class="w-16 h-16 rounded-xl shadow-lg bg-base-300" v-if="hit.icon_url" />
+                <div class="w-16 h-16 rounded-xl shadow-lg bg-base-300 flex items-center justify-center text-3xl" v-else>
+                   <Icon name="material-symbols:extension-rounded" />
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                   <div class="flex items-start justify-between gap-2">
+                      <h4 class="font-bold text-sm truncate">{{ hit.title }}</h4>
+                      <div class="flex items-center gap-1 text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                         <Icon name="material-symbols:download-rounded" />
+                         {{ (hit.downloads / 1000).toFixed(1) }}k
+                      </div>
+                   </div>
+                   <p class="text-[10px] text-base-content/50 line-clamp-2 mt-1">{{ hit.description }}</p>
+                   <div class="flex items-center gap-2 mt-3">
+                      <button 
+                        @click="installContent(hit)" 
+                        class="btn btn-primary btn-xs rounded-lg gap-1"
+                        :disabled="installLoading === hit.project_id"
+                      >
+                         <span v-if="installLoading === hit.project_id" class="loading loading-spinner loading-xs"></span>
+                         <Icon v-else name="material-symbols:install-desktop-rounded" />
+                         Install
+                      </button>
+                      <a :href="`https://modrinth.com/project/${hit.slug}`" target="_blank" class="btn btn-ghost btn-xs rounded-lg gap-1">
+                         <Icon name="material-symbols:open-in-new-rounded" />
+                         View
+                      </a>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'properties'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
@@ -191,6 +307,8 @@ const formatBytes = (bytes: number) => {
 
 const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
+  { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
+  { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
   { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
   { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
   { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
@@ -198,6 +316,53 @@ const tabs = [
 ]
 
 const javaVersions = ref<any[]>([])
+const searchResults = ref<any[]>([])
+const searchLoading = ref(false)
+const searchQuery = ref('')
+const installLoading = ref<string | null>(null)
+
+const handleSearch = async () => {
+  if (!searchQuery.value) return
+  searchLoading.value = true
+  try {
+    const [loader, ver] = server.value!.version.split(' ')
+    const data = await $fetch<any>(`/api/searchContent`, {
+      query: {
+        q: searchQuery.value,
+        loader: loader,
+        version: ver
+      },
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    })
+    searchResults.value = data.hits
+  } catch (error) {
+    console.error('Search failed:', error)
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+const installContent = async (project: any) => {
+  installLoading.value = project.project_id
+  try {
+    const [loader, ver] = server.value!.version.split(' ')
+    await $fetch('/api/installContent', {
+      method: 'POST',
+      body: {
+        serverName: serverName,
+        projectId: project.project_id,
+        loader: loader,
+        version: ver
+      },
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    })
+    alert(`Successfully installed ${project.title}`)
+  } catch (error: any) {
+    alert(`Installation failed: ${error.statusMessage}`)
+  } finally {
+    installLoading.value = null
+  }
+}
 
 const fetchJavaVersions = async () => {
   try {
