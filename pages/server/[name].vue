@@ -219,6 +219,82 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'backups'">
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[400px]">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
+            <h3 class="font-bold flex items-center gap-2">
+              <Icon name="material-symbols:backup-rounded" class="text-primary" />
+              Server Backups ({{ backups.length }})
+            </h3>
+            <button 
+              @click="createBackup" 
+              class="btn btn-primary btn-sm rounded-xl px-6 gap-2"
+              :disabled="loadingBackups || server.status !== 'offline'"
+            >
+              <span v-if="loadingBackups" class="loading loading-spinner loading-xs"></span>
+              <Icon v-else name="material-symbols:add-rounded" />
+              Create Backup
+            </button>
+          </div>
+          
+          <div v-if="loadingBackups && backups.length === 0" class="flex-1 flex items-center justify-center p-20">
+             <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+
+          <div v-else-if="backups.length === 0" class="flex flex-col items-center justify-center p-20 text-center opacity-40">
+             <Icon name="material-symbols:backup-off-rounded" class="text-6xl mb-4" />
+             <p class="font-bold">No backups found</p>
+             <p class="text-xs">Backups will appear here once created. Server must be offline.</p>
+          </div>
+
+          <div v-else class="overflow-x-auto">
+             <table class="table w-full">
+                <thead>
+                   <tr class="border-base-content/5">
+                      <th class="bg-transparent">Date</th>
+                      <th class="bg-transparent">Filename</th>
+                      <th class="bg-transparent">Size</th>
+                      <th class="bg-transparent text-right">Actions</th>
+                   </tr>
+                </thead>
+                <tbody>
+                   <tr v-for="backup in backups" :key="backup.name" class="border-base-content/5 hover:bg-base-content/5 transition-colors group">
+                      <td>
+                         <div class="flex flex-col">
+                            <span class="font-bold">{{ new Date(backup.date).toLocaleDateString() }}</span>
+                            <span class="text-xs opacity-50">{{ new Date(backup.date).toLocaleTimeString() }}</span>
+                         </div>
+                      </td>
+                      <td class="font-mono text-[10px] opacity-70">{{ backup.name }}</td>
+                      <td>{{ formatBytes(backup.size) }}</td>
+                      <td class="text-right">
+                         <div class="flex justify-end gap-2">
+                            <button 
+                              @click="restoreBackup(backup.name)" 
+                              class="btn btn-ghost btn-xs rounded-lg gap-1 text-warning"
+                              :disabled="loadingBackups || server.status !== 'offline'"
+                              title="Restore Backup"
+                            >
+                               <Icon name="material-symbols:settings-backup-restore-rounded" />
+                               Restore
+                            </button>
+                            <button 
+                              @click="deleteBackup(backup.name)" 
+                              class="btn btn-ghost btn-xs rounded-lg text-error"
+                              :disabled="loadingBackups"
+                              title="Delete Backup"
+                            >
+                               <Icon name="material-symbols:delete-rounded" />
+                            </button>
+                         </div>
+                      </td>
+                   </tr>
+                </tbody>
+             </table>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'properties'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
@@ -294,10 +370,13 @@ const formatBytes = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+const { backups, loading: loadingBackups, fetchBackups, createBackup, deleteBackup, restoreBackup } = useBackups(serverName)
+
 const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
   { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
   { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
+  { id: 'backups', label: 'Backups', icon: 'material-symbols:backup-rounded' },
   { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
   { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
   { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
@@ -455,6 +534,7 @@ const handleDelete = async () => {
 onMounted(async () => {
   await getProperties()
   await fetchJavaVersions()
+  await fetchBackups()
   fetchLogs() // This starts the WS connection in useConsole
   startPolling(2000) // Poll every 2 seconds for player updates and status
 })

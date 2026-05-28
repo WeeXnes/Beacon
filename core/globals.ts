@@ -11,6 +11,7 @@ export namespace environment{
     export namespace paths{
         export let data: string = `${os.homedir()}/.mcservermanager`;
         export let servers: string = `${os.homedir()}/.mcservermanager/servers`;
+        export let backups: string = `${os.homedir()}/.mcservermanager/backups`;
     }
     export namespace files{
         export let settings: string = paths.data + "/settings.json";
