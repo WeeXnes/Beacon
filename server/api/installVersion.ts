@@ -42,17 +42,6 @@ export default defineEventHandler(async (event) => {
             downloadName = buildDetail.downloads.application.name;
             downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${downloadName}`;
             jarName = downloadName;
-        } else if (project === 'vanilla') {
-            const manifest = await $fetch<any>('https://launchermeta.mojang.com/mc/game/version_manifest.json');
-            const versionEntry = manifest.versions.find((v: any) => v.id === version);
-            if (!versionEntry) throw new Error(`Vanilla version ${version} not found`);
-
-            const versionDetail = await $fetch<any>(versionEntry.url);
-            if (!versionDetail.downloads.server) throw new Error(`No server jar found for Vanilla ${version}`);
-
-            downloadUrl = versionDetail.downloads.server.url;
-            downloadName = `vanilla-server-${version}.jar`;
-            jarName = downloadName;
         } else if (project === 'fabric') {
             const loaders = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/loader');
             const installers = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/installer');

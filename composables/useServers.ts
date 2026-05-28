@@ -43,6 +43,7 @@ export const useServers = () => {
             existing.javaVersionName = newS.javaVersionName;
             existing.pid = newS.pid;
             existing.stats = newS.stats;
+            existing.onlinePlayers = newS.onlinePlayers;
           } else {
             servers.value.push(newS);
           }

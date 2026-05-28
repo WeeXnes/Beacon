@@ -14,18 +14,6 @@ export default defineEventHandler(async (event) => {
             };
         } 
         
-        if (project === 'vanilla') {
-            consola.info('[API] Fetching versions from Mojang (Vanilla)...');
-            const manifest = await $fetch<any>('https://launchermeta.mojang.com/mc/game/version_manifest.json');
-            const releaseVersions = manifest.versions
-                .filter((v: any) => v.type === 'release')
-                .map((v: any) => v.id);
-            return {
-                project: 'vanilla',
-                versions: releaseVersions
-            };
-        }
-
         if (project === 'fabric') {
             consola.info('[API] Fetching versions from Fabric...');
             const gameVersions = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/game');

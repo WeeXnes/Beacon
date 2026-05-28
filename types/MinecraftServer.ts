@@ -16,11 +16,6 @@ export interface MinecraftServer {
         cpu: number;
         memory: number;
     };
-    statsHistory?: {
-        cpu: number;
-        memory: number;
-        timestamp: number;
-    }[];
 }
 
 

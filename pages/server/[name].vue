@@ -22,30 +22,12 @@
           </div>
           <p class="text-base-content/50 font-medium">
             Running {{ server.version }} • {{ server.maxMemory }}GB RAM
+            <span v-if="server.status === 'online' && server.stats" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
+              <Icon name="lucide:cpu" class="w-4 h-4 inline mr-1" /> {{ server.stats.cpu }}%
+              <Icon name="lucide:hard-drive" class="w-4 h-4 inline ml-2 mr-1" /> {{ formatBytes(server.stats.memory) }}
+            </span>
           </p>
         </div>
-      </div>
-
-      <!-- Resource Analytics Header Sparklines -->
-      <div v-if="server.status === 'online' && server.statsHistory" class="flex gap-8 items-center bg-base-100/30 p-4 rounded-2xl border border-base-content/5">
-         <div class="flex flex-col gap-1">
-            <div class="flex justify-between items-center text-[10px] uppercase font-bold text-base-content/40">
-               <span>CPU</span>
-               <span class="text-primary">{{ server.stats?.cpu }}%</span>
-            </div>
-            <div class="w-24 h-8">
-               <StatChart :data="server.statsHistory.map(h => h.cpu)" :max="100" color="primary" />
-            </div>
-         </div>
-         <div class="flex flex-col gap-1">
-            <div class="flex justify-between items-center text-[10px] uppercase font-bold text-base-content/40">
-               <span>RAM</span>
-               <span class="text-secondary">{{ formatBytes(server.stats?.memory || 0) }}</span>
-            </div>
-            <div class="w-24 h-8">
-               <StatChart :data="server.statsHistory.map(h => h.memory)" :max="server.maxMemory * 1024 * 1024 * 1024" color="secondary" />
-            </div>
-         </div>
       </div>
 
       <div class="flex items-center gap-3 relative z-10">
@@ -308,61 +290,28 @@ const formatBytes = (bytes: number) => {
 const tabs = [
   { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
   { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
-  { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
   { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
   { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
   { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
-  { id: 'backups', label: 'Backups', icon: 'material-symbols:history-rounded' },
 ]
 
 const javaVersions = ref<any[]>([])
-const searchResults = ref<any[]>([])
-const searchLoading = ref(false)
-const searchQuery = ref('')
-const installLoading = ref<string | null>(null)
+const { servers, startServer, stopServer, startPolling, stopPolling } = useServers()
+const { logs, isLive, fetchLogs, sendCommand, reconnect } = useConsole(serverName)
 
-const handleSearch = async () => {
-  if (!searchQuery.value) return
-  searchLoading.value = true
-  try {
-    const [loader, ver] = server.value!.version.split(' ')
-    const data = await $fetch<any>(`/api/searchContent`, {
-      query: {
-        q: searchQuery.value,
-        loader: loader,
-        version: ver
-      },
-      headers: { Authorization: `Bearer ${useCookie('token').value}` }
-    })
-    searchResults.value = data.hits
-  } catch (error) {
-    console.error('Search failed:', error)
-  } finally {
-    searchLoading.value = false
-  }
-}
+const server = computed(() => servers.value.find(s => s.name === serverName))
+const activeTab = ref('console')
+const commandInput = ref('')
+const terminal = ref<HTMLElement | null>(null)
+const properties = ref<any>({})
 
-const installContent = async (project: any) => {
-  installLoading.value = project.project_id
-  try {
-    const [loader, ver] = server.value!.version.split(' ')
-    await $fetch('/api/installContent', {
-      method: 'POST',
-      body: {
-        serverName: serverName,
-        projectId: project.project_id,
-        loader: loader,
-        version: ver
-      },
-      headers: { Authorization: `Bearer ${useCookie('token').value}` }
-    })
-    alert(`Successfully installed ${project.title}`)
-  } catch (error: any) {
-    alert(`Installation failed: ${error.statusMessage}`)
-  } finally {
-    installLoading.value = null
-  }
-}
+const formatBytes = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const fetchJavaVersions = async () => {
   try {
@@ -452,11 +401,14 @@ onMounted(async () => {
   await getProperties()
   await fetchJavaVersions()
   fetchLogs() // This starts the WS connection in useConsole
+  startPolling(2000) // Poll every 2 seconds for player updates and status
 })
 
 onUnmounted(() => {
   // WS cleanup is handled in useConsole's onBeforeUnmount
+  stopPolling()
 })
+
 
 watch(logs, () => {
   if (terminal.value) {
