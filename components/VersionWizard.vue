@@ -140,7 +140,7 @@ onMounted(() => {
           <!-- PaperMC -->
           <button @click="selectProject('paper')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
             <div class="flex items-center gap-2 text-primary font-bold">
-              <Icon name="simple-icons:papermc" />
+              <Icon name="lucide:scroll" />
               PaperMC
             </div>
             <span class="text-[10px] text-base-content/40 font-normal">High-performance with plugin support.</span>
@@ -167,7 +167,7 @@ onMounted(() => {
           <!-- Fabric -->
           <button @click="selectProject('fabric')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
             <div class="flex items-center gap-2 text-info font-bold">
-              <Icon name="simple-icons:fabricmc" />
+              <Icon name="lucide:layers" />
               Fabric
             </div>
             <span class="text-[10px] text-base-content/40 font-normal">Lightweight modding for modern versions.</span>
