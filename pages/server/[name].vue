@@ -149,15 +149,22 @@
       <div v-if="activeTab === 'marketplace'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[500px] flex flex-col">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
-            <div class="flex-1 max-w-md relative">
-              <Icon name="material-symbols:search-rounded" class="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" />
-              <input 
-                v-model="searchQuery" 
-                @keyup.enter="handleSearch"
-                type="text" 
-                placeholder="Search Modrinth (e.g. EssentialsX, Geyser, Lithium)..." 
-                class="input input-bordered w-full pl-12 rounded-2xl bg-base-100/50 border-base-content/5"
-              />
+            <div class="flex-1 max-w-md relative flex gap-2">
+              <div class="relative flex-1">
+                <Icon name="material-symbols:search-rounded" class="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" />
+                <input 
+                  v-model="searchQuery" 
+                  @keyup.enter="handleSearch"
+                  type="text" 
+                  placeholder="Search Modrinth (e.g. EssentialsX, Geyser, Lithium)..." 
+                  class="input input-bordered w-full pl-12 rounded-2xl bg-base-100/50 border-base-content/5"
+                />
+              </div>
+              <button @click="handleSearch" class="btn btn-primary rounded-xl" :disabled="searchLoading">
+                <Icon v-if="!searchLoading" name="material-symbols:search-rounded" />
+                <span v-else class="loading loading-spinner loading-xs"></span>
+                Search
+              </button>
             </div>
             <div class="flex items-center gap-2 text-xs font-bold opacity-40 px-4">
                <Icon name="simple-icons:modrinth" class="text-lg" />
@@ -306,10 +313,15 @@ const handleSearch = async () => {
   if (!searchQuery.value) return
   searchLoading.value = true
   try {
-    const versionParts = server.value!.version.split(' ')
-    const loader = versionParts[0]
-    const ver = versionParts[1]
+    let loader = ''
+    let ver = ''
     
+    if (server.value?.version) {
+        const parts = server.value.version.split(' ')
+        loader = parts[0] || ''
+        ver = parts[1] || ''
+    }
+
     const data = await $fetch<any>(`/api/searchContent`, {
       query: {
         q: searchQuery.value,
@@ -318,7 +330,7 @@ const handleSearch = async () => {
       },
       headers: { Authorization: `Bearer ${useCookie('token').value}` }
     })
-    searchResults.value = data.hits
+    searchResults.value = data.hits || []
   } catch (error) {
     console.error('Search failed:', error)
   } finally {
@@ -329,9 +341,14 @@ const handleSearch = async () => {
 const installContent = async (project: any) => {
   installLoading.value = project.project_id
   try {
-    const versionParts = server.value!.version.split(' ')
-    const loader = versionParts[0]
-    const ver = versionParts[1]
+    let loader = ''
+    let ver = ''
+    
+    if (server.value?.version) {
+        const parts = server.value.version.split(' ')
+        loader = parts[0] || ''
+        ver = parts[1] || ''
+    }
 
     await $fetch('/api/installContent', {
       method: 'POST',
