@@ -146,72 +146,6 @@
         </div>
       </div>
 
-      <div v-if="activeTab === 'marketplace'">
-        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[500px] flex flex-col">
-          <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
-            <div class="flex-1 max-w-md relative">
-              <Icon name="material-symbols:search-rounded" class="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" />
-              <input 
-                v-model="searchQuery" 
-                @keyup.enter="handleSearch"
-                type="text" 
-                placeholder="Search Modrinth (e.g. EssentialsX, Geyser, Lithium)..." 
-                class="input input-bordered w-full pl-12 rounded-2xl bg-base-100/50 border-base-content/5"
-              />
-            </div>
-            <div class="flex items-center gap-2 text-xs font-bold opacity-40 px-4">
-               <Icon name="simple-icons:modrinth" class="text-lg" />
-               POWERED BY MODRINTH
-            </div>
-          </div>
-
-          <div v-if="searchLoading" class="flex-1 flex items-center justify-center">
-             <span class="loading loading-spinner loading-lg text-primary"></span>
-          </div>
-
-          <div v-else-if="searchResults.length === 0" class="flex-1 flex flex-col items-center justify-center p-20 text-center opacity-40">
-             <Icon name="material-symbols:category-rounded" class="text-6xl mb-4" />
-             <p class="font-bold">Search for Plugins or Mods</p>
-             <p class="text-xs">Enter a keyword above to browse compatible content.</p>
-          </div>
-
-          <div v-else class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[600px]">
-             <div v-for="hit in searchResults" :key="hit.project_id" class="bg-base-100/50 p-4 rounded-2xl border border-base-content/5 flex items-start gap-4 hover:border-primary/30 transition-colors group">
-                <img :src="hit.icon_url" class="w-16 h-16 rounded-xl shadow-lg bg-base-300" v-if="hit.icon_url" />
-                <div class="w-16 h-16 rounded-xl shadow-lg bg-base-300 flex items-center justify-center text-3xl" v-else>
-                   <Icon name="material-symbols:extension-rounded" />
-                </div>
-                
-                <div class="flex-1 min-w-0">
-                   <div class="flex items-start justify-between gap-2">
-                      <h4 class="font-bold text-sm truncate">{{ hit.title }}</h4>
-                      <div class="flex items-center gap-1 text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
-                         <Icon name="material-symbols:download-rounded" />
-                         {{ (hit.downloads / 1000).toFixed(1) }}k
-                      </div>
-                   </div>
-                   <p class="text-[10px] text-base-content/50 line-clamp-2 mt-1">{{ hit.description }}</p>
-                   <div class="flex items-center gap-2 mt-3">
-                      <button 
-                        @click="installContent(hit)" 
-                        class="btn btn-primary btn-xs rounded-lg gap-1"
-                        :disabled="installLoading === hit.project_id"
-                      >
-                         <span v-if="installLoading === hit.project_id" class="loading loading-spinner loading-xs"></span>
-                         <Icon v-else name="material-symbols:install-desktop-rounded" />
-                         Install
-                      </button>
-                      <a :href="`https://modrinth.com/project/${hit.slug}`" target="_blank" class="btn btn-ghost btn-xs rounded-lg gap-1">
-                         <Icon name="material-symbols:open-in-new-rounded" />
-                         View
-                      </a>
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-      </div>
-
       <div v-if="activeTab === 'properties'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
@@ -270,7 +204,7 @@ import { parse, stringify } from 'ini'
 const route = useRoute()
 const router = useRouter()
 const serverName = route.params.name as string
-const { servers, startServer, stopServer } = useServers()
+const { servers, startServer, stopServer, startPolling, stopPolling } = useServers()
 const { logs, isLive, fetchLogs, sendCommand, reconnect } = useConsole(serverName)
 
 const server = computed(() => servers.value.find(s => s.name === serverName))
@@ -296,22 +230,6 @@ const tabs = [
 ]
 
 const javaVersions = ref<any[]>([])
-const { servers, startServer, stopServer, startPolling, stopPolling } = useServers()
-const { logs, isLive, fetchLogs, sendCommand, reconnect } = useConsole(serverName)
-
-const server = computed(() => servers.value.find(s => s.name === serverName))
-const activeTab = ref('console')
-const commandInput = ref('')
-const terminal = ref<HTMLElement | null>(null)
-const properties = ref<any>({})
-
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
 
 const fetchJavaVersions = async () => {
   try {
@@ -408,7 +326,6 @@ onUnmounted(() => {
   // WS cleanup is handled in useConsole's onBeforeUnmount
   stopPolling()
 })
-
 
 watch(logs, () => {
   if (terminal.value) {
