@@ -50,12 +50,13 @@ export default defineEventHandler(async (event) => {
         // Save PID to persistent storage
         saveJsonFile();
 
-        subprocess.stdout.on('data', (data: Buffer) => {
+        const handleLogLine = (data: Buffer, isErrorStream: boolean) => {
             const line = data.toString();
             
-            // Player Join/Leave Parsing
-            const joinMatch = line.match(/\[.*INFO\]: (.*) joined the game/);
-            const leaveMatch = line.match(/\[.*INFO\]: (.*) left the game/);
+            // Player Join Parsing - Support modern and legacy
+            const modernJoin = line.match(/\[.*INFO\][:\s]+(.*) joined the game/i);
+            const legacyJoin = line.match(/\[.*INFO\][:\s]+(.*?)[\s]*\[\/.*\] logged in/i);
+            const joinMatch = modernJoin || legacyJoin;
             
             if (joinMatch) {
                 const playerName = joinMatch[1].trim();
@@ -66,6 +67,11 @@ export default defineEventHandler(async (event) => {
                 }
             }
             
+            // Player Leave Parsing - Support modern and legacy
+            const modernLeave = line.match(/\[.*INFO\][:\s]+(.*) left the game/i);
+            const legacyLeave = line.match(/\[.*INFO\][:\s]+(.*?)[\s]*lost connection/i);
+            const leaveMatch = modernLeave || legacyLeave;
+            
             if (leaveMatch) {
                 const playerName = leaveMatch[1].trim();
                 if (server.onlinePlayers) {
@@ -74,25 +80,39 @@ export default defineEventHandler(async (event) => {
                 }
             }
 
+            // Online Detection
             if (line.includes('Done') || 
                 line.includes('For help, type "help"') || 
                 line.includes('? for help') ||
                 line.includes('Starting remote control listener')) {
-                server.status = 'online';
-                consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
-                sendDiscordMessage(`✅ **${server.name}** is now online!`);
-                updateDiscordPresence();
+                if (server.status !== 'online') {
+                    server.status = 'online';
+                    consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
+                    sendDiscordMessage(`✅ **${server.name}** is now online!`);
+                    updateDiscordPresence();
+                }
             }
-        });
 
-        subprocess.stderr.on('data', (data: Buffer) => {
-            const line = data.toString().trim();
-            if (line.includes('Advanced terminal features are not available')) {
-                consola.warn(`[SERVER] ⚠️ [${server.name}] Terminal: ${line}`);
-            } else {
-                consola.error(`[SERVER] 🚩 [${server.name}] STDERR: ${line}`);
+            // Console Logging
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
+
+            if (isErrorStream) {
+                if (trimmedLine.includes('Advanced terminal features are not available')) {
+                    consola.warn(`[SERVER] ⚠️ [${server.name}] Terminal: ${trimmedLine}`);
+                } else if (trimmedLine.includes('[INFO]') || trimmedLine.toLowerCase().includes('info')) {
+                    // Legacy versions often log INFO to stderr
+                    consola.log(`[SERVER] ℹ️ [${server.name}] ${trimmedLine}`);
+                } else if (trimmedLine.includes('[WARNING]') || trimmedLine.toLowerCase().includes('warning')) {
+                    consola.warn(`[SERVER] ⚠️ [${server.name}] ${trimmedLine}`);
+                } else {
+                    consola.error(`[SERVER] 🚩 [${server.name}] STDERR: ${trimmedLine}`);
+                }
             }
-        });
+        };
+
+        subprocess.stdout.on('data', (data: Buffer) => handleLogLine(data, false));
+        subprocess.stderr.on('data', (data: Buffer) => handleLogLine(data, true));
 
         subprocess.on('exit', (code: number) => {
             consola.info(`[SERVER] ⏹️ Server "${server.name}" exited with code ${code}`);

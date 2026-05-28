@@ -1,4 +1,6 @@
 import {environment} from "~/core/globals";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type ServerStatus = 'online' | 'offline' | 'starting' | 'stopping';
 
@@ -33,7 +35,13 @@ export function getPropertiesPath (server: MinecraftServer): string {
 }
 
 export function getLogsPath (server: MinecraftServer): string {
-    return environment.paths.servers + "/" + server.name + "/logs/latest.log"
+    const modernPath = path.join(environment.paths.servers, server.name, "logs/latest.log");
+    const legacyPath = path.join(environment.paths.servers, server.name, "server.log");
+    
+    if (fs.existsSync(modernPath)) {
+        return modernPath;
+    }
+    return legacyPath;
 }
 
 export function getServerByName(server_name: string): MinecraftServer | undefined {
