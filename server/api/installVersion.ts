@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const { execa } = await import('execa');
 
     const body = await readBody(event);
-    const { name, version, project, maxMemory } = body;
+    const { name, version, project, maxMemory, javaVersionName } = body;
 
     if (!name || !version || !project) {
         throw createError({ statusCode: 400, statusMessage: "Missing required fields" });
@@ -99,12 +99,21 @@ export default defineEventHandler(async (event) => {
             writer.on('error', reject);
         });
 
+        // Determine Java binary for installer
+        let javaBinary = 'java';
+        if (javaVersionName) {
+            const javaVersion = environment.settings.javaVersions.find(v => v.name === javaVersionName);
+            if (javaVersion) {
+                javaBinary = javaVersion.path;
+            }
+        }
+
         // Special handling for Forge (Run installer)
         if (project === 'forge') {
-            consola.info(`[INSTALL] 🔨 Running Forge installer...`);
+            consola.info(`[INSTALL] 🔨 Running Forge installer using ${javaBinary}...`);
             // Run: java -jar installer.jar --installServer
             try {
-                await execa('java', ['-jar', downloadName, '--installServer'], { cwd: serverDir });
+                await execa(javaBinary, ['-jar', downloadName, '--installServer'], { cwd: serverDir });
                 consola.info(`[INSTALL] ✅ Forge files generated.`);
                 
                 // Try to find the server jar. In newer versions it's often 'run.sh/bat' or a specific jar.
@@ -122,7 +131,9 @@ export default defineEventHandler(async (event) => {
                 }
                 
                 // Cleanup installer
-                fs.unlinkSync(downloadPath);
+                if (fs.existsSync(downloadPath)) {
+                    fs.unlinkSync(downloadPath);
+                }
             } catch (err: any) {
                 consola.error(`[INSTALL] ❌ Forge installation failed:`, err.message);
                 throw new Error(`Forge installer failed: ${err.message}`);
@@ -136,7 +147,8 @@ export default defineEventHandler(async (event) => {
             jarName: jarName,
             maxMemory: maxMemory || 2,
             status: 'offline',
-            process: null
+            process: null,
+            javaVersionName: javaVersionName
         });
         saveJsonFile();
 

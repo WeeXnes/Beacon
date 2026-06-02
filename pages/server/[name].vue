@@ -334,14 +334,28 @@
             </div>
 
             <div class="form-control max-w-md">
-              <label class="label"><span class="label-text font-bold">Java Runtime</span></label>
-              <select v-model="server.javaVersionName" class="select select-bordered rounded-xl bg-base-100/50 border-base-content/5">
-                <option :value="undefined">System Default (java)</option>
-                <option v-for="java in javaVersions" :key="java.name" :value="java.name">{{ java.name }}</option>
-              </select>
-              <label class="label">
-                <span class="label-text-alt text-base-content/40">Select which Java version to use for this instance.</span>
+              <label class="label cursor-pointer justify-start gap-4">
+                <input type="checkbox" v-model="server.publicStatusEnabled" class="toggle toggle-primary" />
+                <span class="label-text font-bold">Enable Public Status Page</span>
               </label>
+              <label class="label">
+                <span class="label-text-alt text-base-content/40">
+                  Allows anyone with the link to view server status, players, and chat log.
+                </span>
+              </label>
+            </div>
+
+            <div v-if="server.publicStatusEnabled" class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold text-primary uppercase tracking-wider">Public URL</span>
+                  <span class="text-sm font-mono break-all">/status/{{ server.name }}</span>
+                </div>
+                <a :href="`/status/${server.name}`" target="_blank" class="btn btn-primary btn-sm rounded-xl">
+                  <Icon name="material-symbols:open-in-new-rounded" />
+                  Open
+                </a>
+              </div>
             </div>
           </div>
         </div>

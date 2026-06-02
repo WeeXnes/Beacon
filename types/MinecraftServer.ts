@@ -19,6 +19,7 @@ export interface MinecraftServer {
         cpu: number;
         memory: number;
     };
+    publicStatusEnabled?: boolean;
 }
 
 

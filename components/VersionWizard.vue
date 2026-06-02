@@ -45,6 +45,31 @@ const selectProject = async (p: string) => {
   }
 };
 
+watch(selectedVersion, (newVer) => {
+  if (!newVer) return;
+  
+  // Versions 1.16.5 and older generally work best with Java 8
+  // 1.17+ requires Java 16 or 17+
+  const isOlder = newVer.startsWith('1.8') || newVer.startsWith('1.7') || 
+                  newVer.startsWith('1.12') || newVer.startsWith('1.16') ||
+                  (newVer.includes('.') && parseInt(newVer.split('.')[1]) <= 16);
+
+  if (isOlder) {
+    const java8 = javaVersions.value.find(v => v.name.includes('1.8') || v.path.includes('java-8'));
+    if (java8) {
+      javaVersionName.value = java8.name;
+    }
+  } else {
+    // For newer versions, default to system or a newer java if available
+    const javaLatest = javaVersions.value.find(v => v.name.includes('21') || v.name.includes('17'));
+    if (javaLatest) {
+      javaVersionName.value = javaLatest.name;
+    } else {
+      javaVersionName.value = undefined; // System default
+    }
+  }
+});
+
 watch(includeSnapshots, () => {
   if (project.value === 'vanilla' && step.value === 2) {
     selectProject('vanilla');
@@ -105,7 +130,8 @@ const install = async () => {
         name: serverName.value,
         version: selectedVersion.value,
         project: project.value,
-        maxMemory: maxMemory.value
+        maxMemory: maxMemory.value,
+        javaVersionName: javaVersionName.value
       },
       headers: { Authorization: `Bearer ${useCookie('token').value}` }
     });
@@ -222,6 +248,14 @@ onMounted(() => {
             <input type="range" min="1" max="16" v-model="maxMemory" class="range range-primary range-sm flex-1" />
             <span class="w-12 text-center font-bold">{{ maxMemory }}G</span>
           </div>
+        </div>
+
+        <div class="form-control w-full">
+            <label class="label"><span class="label-text font-bold">Java Runtime</span></label>
+            <select v-model="javaVersionName" class="select select-bordered rounded-xl bg-base-200/50 border-base-content/5">
+                <option :value="undefined">System Default</option>
+                <option v-for="java in javaVersions" :key="java.name" :value="java.name">{{ java.name }}</option>
+            </select>
         </div>
 
         <div v-if="error" class="alert alert-error text-sm py-2 rounded-xl">

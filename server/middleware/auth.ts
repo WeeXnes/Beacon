@@ -6,10 +6,11 @@ import { consola } from 'consola';
 export default defineEventHandler(async (event) => {
   const path = getRequestPath(event);
   const isApi = path.startsWith('/api/');
+  const isPublicApi = path.startsWith('/api/public/');
   const isLogin = path === '/api/login';
   const isIcon = path.startsWith('/api/_nuxt_icon');
 
-  if (isApi && !isLogin && !isIcon) {
+  if (isApi && !isLogin && !isIcon && !isPublicApi) {
     const authHeader = getHeader(event, 'authorization');
     const method = event.method;
 
