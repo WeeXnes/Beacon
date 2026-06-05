@@ -24,6 +24,19 @@ export default defineEventHandler(async (event) => {
             // Assume server_properties is a JSON string of the object if it's velocity
             try {
                 const configObj = JSON.parse(server_properties);
+                
+                // Helper to sanitize numeric values in the config object
+                const sanitizeNumeric = (obj: any) => {
+                    for (const key in obj) {
+                        if (typeof obj[key] === 'string' && !isNaN(Number(obj[key])) && obj[key].trim() !== '') {
+                            obj[key] = Number(obj[key]);
+                        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                            sanitizeNumeric(obj[key]);
+                        }
+                    }
+                };
+                sanitizeNumeric(configObj);
+                
                 contentToSave = toml.stringify(configObj);
             } catch (e) {
                 // Fallback to raw if not JSON
