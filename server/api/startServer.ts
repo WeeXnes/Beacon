@@ -49,7 +49,9 @@ export default defineEventHandler(async (event) => {
         saveJsonFile();
 
         const handleLogLine = (data: Buffer, isErrorStream: boolean) => {
-            const line = data.toString();
+            const rawLine = data.toString();
+            // Strip ANSI color codes
+            const line = rawLine.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
             
             // Player Join Parsing - Support modern and legacy
             const modernJoin = line.match(/\[.*INFO\][:\s]+(.*) joined the game/i);
@@ -59,6 +61,8 @@ export default defineEventHandler(async (event) => {
             if (joinMatch) {
                 const playerName = joinMatch[1].trim();
                 if (!server.onlinePlayers) server.onlinePlayers = [];
+                
+                // Ensure player name is clean and unique
                 if (!server.onlinePlayers.includes(playerName)) {
                     server.onlinePlayers.push(playerName);
                     consola.info(`[SERVER] 👤 Player joined: ${playerName} on "${server.name}"`);
