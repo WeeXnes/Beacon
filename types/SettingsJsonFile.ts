@@ -5,17 +5,9 @@ export interface JavaVersion {
     path: string;
 }
 
-export interface DiscordConfig {
-    enabled: boolean;
-    token: string;
-    channelId: string;
-    showPresence: boolean;
-}
-
 export interface SettingsJsonFile {
     eula: boolean;
     servers: MinecraftServer[];
     password_hash: string;
     javaVersions: JavaVersion[];
-    discord?: DiscordConfig;
 }

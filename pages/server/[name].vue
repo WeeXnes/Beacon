@@ -479,21 +479,6 @@
                 <span class="label-text-alt text-base-content/40">Select which Java version to use for this instance.</span>
               </label>
             </div>
-
-            <!-- Public Status Page is enabled by default -->
-            <div class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
-                <p class="text-sm text-primary/70">Public status page is enabled for this server.</p>
-              <div class="flex items-center justify-between gap-4 mt-4">
-                <div class="flex flex-col">
-                  <span class="text-xs font-bold text-primary uppercase tracking-wider">Public URL</span>
-                  <span class="text-sm font-mono break-all">/status/{{ server?.name }}</span>
-                </div>
-                <a :href="`/status/${server?.name}`" target="_blank" class="btn btn-primary btn-sm rounded-xl">
-                  <Icon name="material-symbols:open-in-new-rounded" />
-                  Open
-                </a>
-              </div>
-            </div>
           </div>
         </div>
       </div>

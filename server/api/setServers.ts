@@ -1,32 +1,34 @@
-import {environment} from "~/core/globals";
-import {saveJsonFile} from "~/util/jsonLoader";
-import { consola } from 'consola';
+import { defineEventHandler } from 'h3';
+import { getServerByName } from "~/types/MinecraftServer";
+import { saveJsonFile } from "~/util/jsonLoader";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
-    const serverList = body.servers || body.serverList;
+    const updatedServers = body.servers;
 
-    if (!serverList) {
-        consola.error(`[CONFIG] ❌ Set servers failed: Missing server list`);
-        return { status: 'error', message: 'Missing server list' };
+    if (!Array.isArray(updatedServers)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid data format" });
     }
 
-    try {
-        consola.info(`[CONFIG] 📝 Updating global server list`);
-        // Ensure property exists
-        serverList.forEach((s: any) => {
-            if (s.publicStatusEnabled === undefined) {
-                s.publicStatusEnabled = false;
-            }
-        });
-        environment.settings.servers = serverList;
-        saveJsonFile();
-        consola.success(`[CONFIG] ✅ Global server list updated`);
+    // Apply basic validation and normalization
+    environment.settings.servers = updatedServers.map(s => {
+        return {
+            name: s.name,
+            version: s.version,
+            jarName: s.jarName,
+            project: s.project,
+            maxMemory: s.maxMemory,
+            status: s.status || 'offline',
+            process: null,
+            javaVersionName: s.javaVersionName,
+            pid: s.pid,
+            onlinePlayers: s.onlinePlayers || [],
+            maxPlayers: s.maxPlayers || 20,
+            baseDomain: s.baseDomain,
+            stats: s.stats
+        };
+    });
 
-        return { status: 'success' };
-    } catch (error: any) {
-        consola.error(`[CONFIG] 🔥 Error updating server list:`, error.message);
-        return { status: 'error', error: error.message };
-    }
+    saveJsonFile();
+    return { success: true };
 });
-

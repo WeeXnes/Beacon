@@ -1,7 +1,6 @@
 import { getServerByName } from "~/types/MinecraftServer";
 import { consola } from 'consola';
 import { saveJsonFile } from "~/util/jsonLoader";
-import { sendDiscordMessage } from "~/server/utils/discord";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -21,7 +20,6 @@ export default defineEventHandler(async (event) => {
     try {
         server.status = 'stopping';
         consola.info(`[SERVER] 🛑 Stopping server "${server.name}"...`);
-        sendDiscordMessage(`🛑 Stopping server **${server.name}**...`);
 
         if (server.process) {
             server.process.stdin.write('stop\n');
@@ -33,13 +31,11 @@ export default defineEventHandler(async (event) => {
             server.pid = undefined;
             server.status = 'offline';
             saveJsonFile();
-            sendDiscordMessage(`⏹️ **${server.name}** has been terminated (SIGTERM).`);
         }
 
         return { message: "Stop command sent to Minecraft server." };
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Error stopping "${server_name}":`, error.message);
-        sendDiscordMessage(`🔥 Error stopping **${server_name}**: ${error.message}`);
         return { message: "Failed to stop Minecraft server.", error: error.message };
     }
 });

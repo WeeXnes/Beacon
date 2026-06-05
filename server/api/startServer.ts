@@ -3,7 +3,6 @@ import {execa} from "execa";
 import { consola } from 'consola';
 import { environment } from '~/core/globals';
 import { saveJsonFile } from "~/util/jsonLoader";
-import { sendDiscordMessage, updateDiscordPresence } from "~/server/utils/discord";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -34,7 +33,6 @@ export default defineEventHandler(async (event) => {
         }
 
         consola.start(`[SERVER] 🚀 Starting server "${server.name}" using ${javaBinary} (${xmsArg}, ${xmxArg})`);
-        sendDiscordMessage(`🚀 **${server.name}** is starting...`);
 
         const subprocess = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
             cwd: getServerDirectory(server),
@@ -90,8 +88,6 @@ export default defineEventHandler(async (event) => {
                 if (server.status !== 'online') {
                     server.status = 'online';
                     consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
-                    sendDiscordMessage(`✅ **${server.name}** is now online!`);
-                    updateDiscordPresence();
                 }
             }
 
@@ -123,14 +119,11 @@ export default defineEventHandler(async (event) => {
             server.status = 'offline';
             server.onlinePlayers = [];
             saveJsonFile();
-            sendDiscordMessage(`⏹️ **${server.name}** has stopped (Code: ${code})`);
-            updateDiscordPresence();
         });
 
         return { message: "Minecraft server started." };
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Fatal error starting "${server_name}":`, error.message);
-        sendDiscordMessage(`🔥 Error starting **${server_name}**: ${error.message}`);
         return { message: "Failed to start Minecraft server.", error: error.message };
     }
 });

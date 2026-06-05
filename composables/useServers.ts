@@ -44,7 +44,6 @@ export const useServers = () => {
             existing.pid = newS.pid;
             existing.stats = newS.stats;
             existing.onlinePlayers = newS.onlinePlayers;
-            existing.publicStatusEnabled = newS.publicStatusEnabled;
           } else {
             servers.value.push(newS);
           }

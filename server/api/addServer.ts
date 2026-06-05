@@ -4,7 +4,6 @@ import {saveJsonFile} from "~/util/jsonLoader";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { consola } from 'consola';
-import { sendDiscordMessage } from "~/server/utils/discord";
 
 export default defineEventHandler(async (event) => {
     const formData = await readMultipartFormData(event);
@@ -44,12 +43,9 @@ export default defineEventHandler(async (event) => {
         fs.writeFileSync(jarPath, filePart.data);
 
         consola.success(`[SERVER] ✅ New server "${newServer.name}" added successfully`);
-        sendDiscordMessage(`✨ New server **${newServer.name}** (${newServer.version}) has been created!`);
         return { status: 'success' };
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Error adding server:`, error.message);
         return { status: 'error', error: error.message };
     }
 });
-
-

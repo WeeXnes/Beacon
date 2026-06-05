@@ -2,7 +2,6 @@ import {removeServerByName, saveJsonFile} from "~/util/jsonLoader";
 import * as fs from 'fs/promises';
 import {getServerByName, getServerDirectory} from "~/types/MinecraftServer";
 import { consola } from 'consola';
-import { sendDiscordMessage } from "~/server/utils/discord";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -28,11 +27,9 @@ export default defineEventHandler(async (event) => {
         saveJsonFile();
 
         consola.success(`[SERVER] ✅ Server "${server_name}" successfully deleted`);
-        sendDiscordMessage(`🗑️ Server **${server_name}** has been deleted.`);
         return { status: 'success' };
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Error deleting server "${server_name}":`, error.message);
         return { status: 'error', error: error.message };
     }
 });
-
