@@ -775,6 +775,8 @@ const saveProxyMapping = async () => {
 watch(activeTab, (newTab) => {
   if (newTab === 'proxy-mapping') {
     fetchProxyMappings()
+  } else if (newTab === 'properties') {
+    getProperties()
   }
 })
 
