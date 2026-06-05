@@ -564,12 +564,14 @@ watch(activeTab, (newTab) => {
 
 const handleSearch = async () => {
   if (!searchQuery.value) return
+  if (!server.value) return // Defensive check
+  
   searchLoading.value = true
   try {
     let loader = ''
     let ver = ''
     
-    if (server.value?.version) {
+    if (server.value.version) {
         const parts = server.value.version.split(' ')
         loader = parts[0] || ''
         ver = parts[1] || ''
@@ -666,6 +668,7 @@ const clearLogs = () => {
 }
 
 const getProperties = async () => {
+  if (!server.value) return;
   try {
     const response = await $fetch<{ properties: string }>('/api/getProperties', {
       method: 'POST',
@@ -675,7 +678,7 @@ const getProperties = async () => {
       }
     })
     
-    if (server.value?.project === 'velocity') {
+    if (server.value.project === 'velocity') {
       try {
         const parsed = typeof response.properties === 'string' ? JSON.parse(response.properties) : response.properties;
         // Filter out complex objects like servers and forced-hosts
