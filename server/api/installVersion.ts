@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         let downloadName = '';
         let jarName = '';
 
-        if (project === 'paper' || project === 'folia') {
+        if (project === 'paper' || project === 'folia' || project === 'velocity') {
             const buildInfo = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}`);
             const latestBuild = buildInfo.builds[buildInfo.builds.length - 1];
             const buildDetail = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}`);
@@ -145,6 +145,7 @@ export default defineEventHandler(async (event) => {
             name,
             version: `${project} ${version}`,
             jarName: jarName,
+            project: project,
             maxMemory: maxMemory || 2,
             status: 'offline',
             process: null,
@@ -152,9 +153,11 @@ export default defineEventHandler(async (event) => {
         });
         saveJsonFile();
 
-        // Auto-accept EULA
-        const eulaPath = path.join(serverDir, 'eula.txt');
-        fs.writeFileSync(eulaPath, 'eula=true');
+        // Auto-accept EULA (Minecraft servers only)
+        if (project !== 'velocity') {
+            const eulaPath = path.join(serverDir, 'eula.txt');
+            fs.writeFileSync(eulaPath, 'eula=true');
+        }
 
         consola.success(`[INSTALL] ✅ Server "${name}" installed successfully`);
         return { success: true, message: `Server ${name} installed successfully.` };

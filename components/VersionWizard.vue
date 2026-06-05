@@ -208,6 +208,15 @@ onMounted(() => {
             <span class="text-[10px] text-base-content/40 font-normal">The classic modding platform.</span>
           </button>
 
+          <!-- Velocity -->
+          <button @click="selectProject('velocity')" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
+            <div class="flex items-center gap-2 text-primary font-bold">
+              <Icon name="lucide:arrow-right-left" />
+              Velocity
+            </div>
+            <span class="text-[10px] text-base-content/40 font-normal">Next-generation Minecraft proxy.</span>
+          </button>
+
           <!-- Manual -->
           <button @click="step = 3" class="btn btn-outline h-20 flex flex-col gap-0 items-start px-5 rounded-2xl border-base-content/10 hover:border-primary hover:bg-primary/5 group">
             <div class="flex items-center gap-2 text-success font-bold">

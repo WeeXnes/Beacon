@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
             fs.mkdirSync(serverDir, { recursive: true });
         }
 
-        environment.settings.servers.push({ ...newServer, status: 'offline' });
+        environment.settings.servers.push({ ...newServer, project: newServer.project || 'manual', status: 'offline' });
         saveJsonFile();
 
         const jarPath = path.join(serverDir, newServer.jarName);

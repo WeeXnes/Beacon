@@ -4,7 +4,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-base-200/50 backdrop-blur-md p-8 rounded-3xl border border-base-content/5 relative z-20">
       <div class="flex items-center gap-6 relative z-10">
         <div class="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-          <Icon name="mdi:minecraft" class="text-5xl" />
+          <Icon :name="server.project === 'velocity' ? 'lucide:arrow-right-left' : 'mdi:minecraft'" class="text-5xl" />
         </div>
         <div>
           <div class="flex items-center gap-3 mb-1">
@@ -222,6 +222,53 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'proxy-mapping'">
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[400px]">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
+            <h3 class="font-bold flex items-center gap-2">
+              <Icon name="lucide:shuffle" class="text-primary" />
+              Integrated Proxy Mapping
+            </h3>
+            <button 
+              @click="saveProxyMapping" 
+              class="btn btn-primary btn-sm rounded-xl px-6"
+              :disabled="mappingLoading"
+            >
+              <span v-if="mappingLoading" class="loading loading-spinner loading-xs"></span>
+              Save Mappings
+            </button>
+          </div>
+          
+          <div v-if="mappingLoading && proxyMappings.length === 0" class="flex-1 flex items-center justify-center p-20">
+             <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+
+          <div v-else class="p-6 space-y-4">
+            <p class="text-sm text-base-content/60 mb-6">Link your Beacon servers to this Velocity proxy. We've automatically detected their local ports.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div v-for="mapping in proxyMappings" :key="mapping.name" class="bg-base-100/50 p-4 rounded-2xl border border-base-content/5 flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <Icon name="mdi:minecraft" />
+                  </div>
+                  <div>
+                    <p class="font-bold">{{ mapping.name }}</p>
+                    <p class="text-[10px] font-mono opacity-50">{{ mapping.address }}</p>
+                  </div>
+                </div>
+                <input type="checkbox" v-model="mapping.isMapped" class="toggle toggle-primary" />
+              </div>
+            </div>
+
+            <div v-if="proxyMappings.length === 0" class="text-center py-12 opacity-40">
+              <Icon name="material-symbols:info-outline" class="text-4xl mb-2" />
+              <p>No other servers found to map.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="activeTab === 'backups'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[400px]">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
@@ -390,15 +437,30 @@ const formatBytes = (bytes: number) => {
 
 const { backups, loading: loadingBackups, fetchBackups, createBackup, deleteBackup, restoreBackup } = useBackups(serverName)
 
-const tabs = [
-  { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
-  { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
-  { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
-  { id: 'backups', label: 'Backups', icon: 'material-symbols:backup-rounded' },
-  { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
-  { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
-  { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
-]
+const tabs = computed(() => {
+  const baseTabs = [
+    { id: 'console', label: 'Console', icon: 'material-symbols:terminal-rounded' },
+    { id: 'backups', label: 'Backups', icon: 'material-symbols:backup-rounded' },
+    { id: 'properties', label: 'Properties', icon: 'material-symbols:settings-input-component-rounded' },
+    { id: 'files', label: 'Files', icon: 'material-symbols:folder-open-rounded' },
+    { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
+  ]
+
+  if (server.value?.project === 'velocity') {
+    return [
+      ...baseTabs.slice(0, 1),
+      { id: 'proxy-mapping', label: 'Proxy Mapping', icon: 'lucide:shuffle' },
+      ...baseTabs.slice(1)
+    ]
+  }
+
+  return [
+    ...baseTabs.slice(0, 1),
+    { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
+    { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
+    ...baseTabs.slice(1)
+  ]
+})
 
 const javaVersions = ref<any[]>([])
 const searchResults = ref<any[]>([])
@@ -543,7 +605,16 @@ const getProperties = async () => {
         Authorization: `Bearer ${useCookie('token').value}`
       }
     })
-    properties.value = parse(response.properties)
+    
+    if (server.value?.project === 'velocity') {
+      try {
+        properties.value = JSON.parse(response.properties)
+      } catch (e) {
+        properties.value = {}
+      }
+    } else {
+      properties.value = parse(response.properties)
+    }
   } catch (error) {
     console.error('Failed to fetch properties:', error)
   }
@@ -551,11 +622,18 @@ const getProperties = async () => {
 
 const saveProperties = async () => {
   try {
+    let propsToSave = ''
+    if (server.value?.project === 'velocity') {
+      propsToSave = JSON.stringify(properties.value)
+    } else {
+      propsToSave = stringify(properties.value)
+    }
+
     await $fetch('/api/setProperties', {
       method: 'POST',
       body: {
         name: serverName,
-        properties: stringify(properties.value)
+        properties: propsToSave
       },
       headers: {
         Authorization: `Bearer ${useCookie('token').value}`
@@ -565,6 +643,50 @@ const saveProperties = async () => {
     console.error('Failed to save properties:', error)
   }
 }
+
+const proxyMappings = ref<any[]>([])
+const mappingLoading = ref(false)
+
+const fetchProxyMappings = async () => {
+  if (server.value?.project !== 'velocity') return
+  mappingLoading.value = true
+  try {
+    const data = await $fetch<any>(`/api/getProxyMapping?name=${serverName}`, {
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    })
+    proxyMappings.value = data.mappings
+  } catch (error) {
+    console.error('Failed to fetch proxy mappings:', error)
+  } finally {
+    mappingLoading.value = false
+  }
+}
+
+const saveProxyMapping = async () => {
+  mappingLoading.value = true
+  try {
+    await $fetch('/api/setProxyMapping', {
+      method: 'POST',
+      body: {
+        proxyName: serverName,
+        mappings: proxyMappings.value
+      },
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    })
+    alert('Proxy mappings saved successfully!')
+  } catch (error) {
+    console.error('Failed to save proxy mappings:', error)
+    alert('Failed to save mappings')
+  } finally {
+    mappingLoading.value = false
+  }
+}
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'proxy-mapping') {
+    fetchProxyMappings()
+  }
+})
 
 const handleDelete = async () => {
   if (!confirm('Are you sure you want to delete this server? This action cannot be undone.')) return

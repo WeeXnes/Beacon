@@ -6,11 +6,14 @@
         <div class="flex items-center gap-4">
           <!-- Creeper Face Icon as primary server icon -->
           <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:bg-primary group-hover:text-primary-content transition-all duration-300">
-            <Icon name="mdi:minecraft" class="text-3xl" />
+            <Icon :name="server.project === 'velocity' ? 'lucide:arrow-right-left' : 'mdi:minecraft'" class="text-3xl" />
           </div>
           <div>
-            <h3 class="font-bold text-lg leading-none mb-1">{{ server.name }}</h3>
-            <p class="text-xs text-base-content/50">{{ server.version }}</p>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-lg leading-none">{{ server.name }}</h3>
+              <div v-if="server.project === 'velocity'" class="badge badge-xs badge-outline opacity-50 font-bold text-[8px]">PROXY</div>
+            </div>
+            <p class="text-xs text-base-content/50 mt-1">{{ server.version }}</p>
           </div>
         </div>
         <div 

@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     const project = query.project as string || 'paper';
 
     try {
-        if (project === 'paper' || project === 'folia') {
+        if (project === 'paper' || project === 'folia' || project === 'velocity') {
             consola.info(`[API] Fetching versions from ${project}...`);
             const projectData = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}`);
             return {

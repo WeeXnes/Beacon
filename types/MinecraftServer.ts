@@ -8,6 +8,7 @@ export interface MinecraftServer {
     name: string;
     version: string;
     jarName: string;
+    project?: string; // e.g. 'paper', 'velocity', 'vanilla'
     maxMemory: number;
     status: ServerStatus;
     process: any;
@@ -30,8 +31,15 @@ export function getJarPath (server: MinecraftServer): string {
     return environment.paths.servers + "/" + server.name + "/" + server.jarName
 }
 
-export function getPropertiesPath (server: MinecraftServer): string {
+export function getConfigPath (server: MinecraftServer): string {
+    if (server.project === 'velocity') {
+        return environment.paths.servers + "/" + server.name + "/velocity.toml"
+    }
     return environment.paths.servers + "/" + server.name + "/server.properties"
+}
+
+export function getPropertiesPath (server: MinecraftServer): string {
+    return getConfigPath(server);
 }
 
 export function getLogsPath (server: MinecraftServer): string {

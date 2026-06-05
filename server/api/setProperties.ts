@@ -1,7 +1,8 @@
 import { defineEventHandler } from 'h3';
-import {getPropertiesPath, getServerByName} from "~/types/MinecraftServer";
+import {getConfigPath, getServerByName} from "~/types/MinecraftServer";
 import * as fs from 'fs/promises';
 import { consola } from 'consola';
+import * as toml from 'smol-toml';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
@@ -15,9 +16,23 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        consola.info(`[CONFIG] 📝 [${server_name}] Updating server.properties`);
-        await fs.writeFile(getPropertiesPath(server), server_properties, 'utf8');
-        consola.success(`[CONFIG] ✅ [${server_name}] server.properties updated`);
+        consola.info(`[CONFIG] 📝 [${server_name}] Updating configuration`);
+        const configPath = getConfigPath(server);
+        
+        let contentToSave = server_properties;
+        if (server.project === 'velocity') {
+            // Assume server_properties is a JSON string of the object if it's velocity
+            try {
+                const configObj = JSON.parse(server_properties);
+                contentToSave = toml.stringify(configObj);
+            } catch (e) {
+                // Fallback to raw if not JSON
+                contentToSave = server_properties;
+            }
+        }
+
+        await fs.writeFile(configPath, contentToSave, 'utf8');
+        consola.success(`[CONFIG] ✅ [${server_name}] configuration updated`);
         return {
             message: `properties for ${server_name} set`,
         };

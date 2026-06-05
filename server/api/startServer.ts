@@ -84,7 +84,9 @@ export default defineEventHandler(async (event) => {
             if (line.includes('Done') || 
                 line.includes('For help, type "help"') || 
                 line.includes('? for help') ||
-                line.includes('Starting remote control listener')) {
+                line.includes('Starting remote control listener') ||
+                line.includes('Listening on /') || // Velocity
+                line.includes('Booting up Velocity')) { // Velocity
                 if (server.status !== 'online') {
                     server.status = 'online';
                     consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);

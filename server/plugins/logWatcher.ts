@@ -46,17 +46,37 @@ export default defineNitroPlugin((nitroApp) => {
 });
 
 function processLogLine(serverName: string, line: string) {
-    const chatMatch = line.match(/<([^>]+)> (.*)/);
+    const infoPart = line.split('INFO]: ')[1];
+    if (!infoPart) return;
+
+    // Chat
+    const chatMatch = infoPart.match(/<([^>]+)> (.*)/);
     if (chatMatch) {
-        sendDiscordEmbed(`Chat in ${serverName}`, `${chatMatch[1]}: ${chatMatch[2]}`, 0x00ff00);
+        sendDiscordEmbed(`💬 Chat in ${serverName}`, `${chatMatch[1]}: ${chatMatch[2]}`, 0x00ff00);
         return;
     }
 
-    if (line.includes('joined the game')) {
-        sendDiscordEmbed('Player Joined', line.split('INFO]: ')[1], 0x0000ff);
-    } else if (line.includes('left the game')) {
-        sendDiscordEmbed('Player Left', line.split('INFO]: ')[1], 0xff0000);
-    } else if (line.includes('has made the advancement')) {
-        sendDiscordEmbed('Advancement', line.split('INFO]: ')[1], 0xffff00);
+    // Join
+    if (infoPart.includes('joined the game')) {
+        sendDiscordEmbed('🎮 Player Joined', `**${infoPart.replace(' joined the game', '')}** joined **${serverName}**`, 0x0000ff);
+        return;
+    }
+
+    // Leave
+    if (infoPart.includes('left the game')) {
+        sendDiscordEmbed('👋 Player Left', `**${infoPart.replace(' left the game', '')}** left **${serverName}**`, 0xff0000);
+        return;
+    }
+
+    // Advancement
+    if (infoPart.includes('has made the advancement')) {
+        sendDiscordEmbed('🏆 Advancement', infoPart, 0xffff00);
+        return;
+    }
+    
+    // Death
+    if (infoPart.includes(' was slain by ') || infoPart.includes(' drowned') || infoPart.includes(' burned to death') || infoPart.includes(' hit the ground too hard')) {
+        sendDiscordEmbed('💀 Death', infoPart, 0x800080);
+        return;
     }
 }
