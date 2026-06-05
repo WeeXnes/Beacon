@@ -88,7 +88,9 @@ export default defineEventHandler(async (event) => {
         }
         
         // Ensure show-max-players is an integer to avoid ClassCastException
-        if (velocityConfig['show-max-players'] && typeof velocityConfig['show-max-players'] === 'object') {
+        if (velocityConfig['show-max-players']) {
+            velocityConfig['show-max-players'] = parseInt(velocityConfig['show-max-players'].toString());
+        } else {
             velocityConfig['show-max-players'] = 500;
         }
 
