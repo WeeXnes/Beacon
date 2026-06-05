@@ -512,20 +512,23 @@ const tabs = computed(() => {
     { id: 'settings', label: 'Server Settings', icon: 'material-symbols:tune-rounded' },
   ]
 
-  if (server.value?.project === 'velocity') {
-    return [
-      ...baseTabs.slice(0, 1),
-      { id: 'proxy-mapping', label: 'Proxy Mapping', icon: 'lucide:shuffle' },
-      ...baseTabs.slice(3) // Skip Properties (index 2)
-    ]
+  const tabs = [...baseTabs.slice(0, 1)]
+  const project = server.value?.project || ''
+  const version = server.value?.version || ''
+  
+  const isVanilla = project === 'vanilla' || version.toLowerCase().includes('vanilla')
+  const isVelocity = project === 'velocity'
+
+  if (isVelocity) {
+    tabs.push({ id: 'proxy-mapping', label: 'Proxy Mapping', icon: 'lucide:shuffle' })
+  } else if (!isVanilla) {
+    tabs.push({ id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' })
+    tabs.push({ id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' })
+  } else {
+    tabs.push({ id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' })
   }
 
-  return [
-    ...baseTabs.slice(0, 1),
-    { id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' },
-    { id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' },
-    ...baseTabs.slice(1)
-  ]
+  return [...tabs, ...baseTabs.slice(1, 3), ...baseTabs.slice(4)]
 })
 
 const javaVersions = ref<any[]>([])
