@@ -86,7 +86,6 @@ export function checkEulaFile(server: MinecraftServer){
     const destinationPathEula = environment.paths.servers + "/" + server.name + "/eula.txt"
     try {
         fs.accessSync(destinationPathEula);
-        console.log('eula exists');
     } catch (error) {
         console.log(`Setting eula for ${server.name} to ${environment.settings.eula}`)
         fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
