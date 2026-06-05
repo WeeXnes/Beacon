@@ -516,7 +516,7 @@ const tabs = computed(() => {
     return [
       ...baseTabs.slice(0, 1),
       { id: 'proxy-mapping', label: 'Proxy Mapping', icon: 'lucide:shuffle' },
-      ...baseTabs.slice(1)
+      ...baseTabs.slice(3) // Skip Properties (index 2)
     ]
   }
 
