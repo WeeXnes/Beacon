@@ -424,8 +424,8 @@
             <button @click="saveProperties" class="btn btn-primary btn-sm rounded-xl px-6">Save Changes</button>
           </div>
           <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             <template v-for="(val, key) in (typeof properties === 'string' ? JSON.parse(properties) : properties)" :key="key">
-                <div v-if="typeof val !== 'object'" class="form-control">
+             <template v-for="(val, key) in properties" :key="key">
+                <div class="form-control">
                   <label class="label"><span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/50">{{ key }}</span></label>
                   <input v-if="typeof val !== 'boolean'" :value="val" @input="properties[key] = ($event.target as HTMLInputElement).value" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5" />
                   <input v-else type="checkbox" :checked="val" @change="properties[key] = ($event.target as HTMLInputElement).checked" class="toggle toggle-primary" />
@@ -674,7 +674,11 @@ const getProperties = async () => {
     
     if (server.value?.project === 'velocity') {
       try {
-        properties.value = JSON.parse(response.properties)
+        const parsed = typeof response.properties === 'string' ? JSON.parse(response.properties) : response.properties;
+        // Filter out complex objects like servers and forced-hosts
+        properties.value = Object.fromEntries(
+          Object.entries(parsed).filter(([_, val]) => typeof val !== 'object')
+        );
       } catch (e) {
         properties.value = {}
       }
