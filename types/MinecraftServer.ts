@@ -16,6 +16,7 @@ export interface MinecraftServer {
     pid?: number;
     onlinePlayers?: string[];
     maxPlayers?: number;
+    baseDomain?: string; // For Velocity proxies
     stats?: {
         cpu: number;
         memory: number;

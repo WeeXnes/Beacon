@@ -1,18 +1,30 @@
 import { defineEventHandler } from 'h3';
 import { getServerByName, getConfigPath } from '~/types/MinecraftServer';
+import { saveJsonFile } from '~/util/jsonLoader';
 import * as fs from 'fs/promises';
 import * as toml from 'smol-toml';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
-    const { proxyName, mappings } = body;
+    const { proxyName, mappings, baseDomain } = body;
 
     const proxy = getServerByName(proxyName);
     if (!proxy || proxy.project !== 'velocity') {
         throw createError({ statusCode: 400, statusMessage: "Invalid proxy server" });
     }
 
+    // Validation: Ensure every enabled mapping has a subdomain
+    for (const m of mappings) {
+        if (m.isMapped && !m.subdomain) {
+            throw createError({ statusCode: 400, statusMessage: `Server ${m.serverName} requires a subdomain.` });
+        }
+    }
+
     try {
+        // Save baseDomain to proxy server settings
+        proxy.baseDomain = baseDomain;
+        saveJsonFile();
+
         const configPath = getConfigPath(proxy);
         let velocityConfig: any = {};
         try {
@@ -29,20 +41,18 @@ export default defineEventHandler(async (event) => {
 
         for (const m of mappings) {
             if (m.isMapped) {
-                velocityConfig.servers[m.mappingName] = m.address;
+                // Use serverName as the internal ID in velocity
+                velocityConfig.servers[m.serverName] = m.address;
                 
-                // Handle forced hosts
-                if (m.hostnames && Array.isArray(m.hostnames)) {
-                    for (const host of m.hostnames) {
-                        if (host.trim()) {
-                            velocityConfig['forced-hosts'][host.trim()] = [m.mappingName];
-                        }
-                    }
+                // Handle forced host (subdomain.baseDomain or just baseDomain if @)
+                const fullHost = m.subdomain === '@' ? baseDomain : `${m.subdomain}.${baseDomain}`;
+                if (fullHost) {
+                    velocityConfig['forced-hosts'][fullHost] = [m.serverName];
                 }
 
                 // Handle try sequence
                 if (m.isInTry) {
-                    trySequence.push(m.mappingName);
+                    trySequence.push(m.serverName);
                 }
             }
         }

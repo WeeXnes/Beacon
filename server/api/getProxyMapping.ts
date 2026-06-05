@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
         const proxyServers = velocityConfig.servers || {};
         const forcedHosts = velocityConfig['forced-hosts'] || {};
         const trySequence = velocityConfig.try || [];
+        const baseDomain = proxy.baseDomain || '';
         
         // Find all other servers
         const allServers = environment.settings.servers.filter(s => s.name !== proxyName && s.project !== 'velocity');
@@ -43,29 +44,38 @@ export default defineEventHandler(async (event) => {
                 // Ignore if properties not found
             }
 
-            // Find if this server is mapped under ANY name in velocity
-            const currentMappingName = Object.keys(proxyServers).find(name => proxyServers[name] === `127.0.0.1:${port}`) || s.name;
-            const isMapped = Object.values(proxyServers).includes(`127.0.0.1:${port}`);
-
-            // Find hostnames for this mapping name
-            const hostnames = Object.keys(forcedHosts).filter(host => {
-                const targets = forcedHosts[host];
-                return Array.isArray(targets) && targets.includes(currentMappingName);
-            });
+            // CRITICAL FIX: Match mapping by server name (ID), not just port
+            // Check if THIS specific server name exists in proxyServers
+            const isMapped = !!proxyServers[s.name];
+            
+            // Extract subdomain from forced-hosts
+            let subdomain = '';
+            if (baseDomain) {
+                const fullHost = Object.keys(forcedHosts).find(host => {
+                    const targets = forcedHosts[host];
+                    return Array.isArray(targets) && targets.includes(s.name);
+                });
+                if (fullHost && fullHost.endsWith('.' + baseDomain)) {
+                    subdomain = fullHost.replace('.' + baseDomain, '');
+                } else if (fullHost === baseDomain) {
+                    subdomain = '@'; // Root domain
+                }
+            }
 
             return {
                 serverName: s.name,
-                mappingName: currentMappingName,
+                mappingName: s.name, // We use internal ID as mapping name for predictability
                 address: `127.0.0.1:${port}`,
                 isMapped,
-                hostnames,
-                isInTry: trySequence.includes(currentMappingName)
+                subdomain: subdomain || s.name.toLowerCase(),
+                isInTry: trySequence.includes(s.name)
             };
         }));
 
         return {
             mappings,
-            trySequence
+            trySequence,
+            baseDomain
         };
     } catch (error: any) {
         throw createError({ statusCode: 500, statusMessage: error.message });

@@ -228,9 +228,9 @@
             <div class="flex flex-col">
               <h3 class="font-bold flex items-center gap-2">
                 <Icon name="lucide:shuffle" class="text-primary" />
-                Advanced Proxy Mapping
+                Velocity Proxy Wizard
               </h3>
-              <p class="text-[10px] opacity-50 uppercase tracking-widest font-bold mt-1">Configure Servers & Forced Hosts</p>
+              <p class="text-[10px] opacity-50 uppercase tracking-widest font-bold mt-1">Configure Base Domain & Routing</p>
             </div>
             <button 
               @click="saveProxyMapping" 
@@ -246,98 +246,103 @@
              <span class="loading loading-spinner loading-lg text-primary"></span>
           </div>
 
-          <div v-else class="p-6 space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
-              <div class="bg-primary/5 border border-primary/10 p-4 rounded-2xl flex gap-4">
-                <Icon name="lucide:shuffle" class="text-primary text-xl shrink-0 mt-1" />
+          <div v-else class="p-6 space-y-8">
+            <!-- Global Config -->
+            <div class="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
+              <div class="flex items-center gap-4 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                  <Icon name="lucide:globe" class="text-xl" />
+                </div>
                 <div>
-                  <p class="text-xs font-bold uppercase tracking-wider text-primary">Routing Logic</p>
-                  <p class="text-[10px] opacity-70 mt-1">Velocity uses <strong>forced-hosts</strong> to route by domain name. The <strong>try</strong> list is only used as a fallback if no hostname match is found.</p>
+                  <h4 class="font-bold">Global Base Domain</h4>
+                  <p class="text-[10px] opacity-50 uppercase tracking-wider font-bold">Used for all hostname generation</p>
                 </div>
               </div>
-              <div class="bg-success/5 border border-success/10 p-4 rounded-2xl flex gap-4">
-                <Icon name="lucide:check-circle" class="text-success text-xl shrink-0 mt-1" />
-                <div>
-                  <p class="text-xs font-bold uppercase tracking-wider text-success">Best Practice</p>
-                  <p class="text-[10px] opacity-70 mt-1">Keep only your main lobby or default server in the <strong>try</strong> list. Use hostnames for everything else.</p>
+              <div class="form-control max-w-md">
+                <div class="flex gap-2">
+                  <input 
+                    v-model="baseDomain" 
+                    type="text" 
+                    placeholder="weexnes.dev" 
+                    class="input input-bordered w-full rounded-xl bg-base-100/50 border-base-content/5 text-sm font-mono"
+                  />
                 </div>
-              </div>
-              <div class="bg-warning/5 border border-warning/10 p-4 rounded-2xl flex gap-4">
-                <Icon name="lucide:alert-triangle" class="text-warning text-xl shrink-0 mt-1" />
-                <div>
-                  <p class="text-xs font-bold uppercase tracking-wider text-warning">DNS Setup</p>
-                  <p class="text-[10px] opacity-70 mt-1">Ensure all hostnames point to this proxy's IP. Velocity will handle the internal routing based on the connection hostname.</p>
-                </div>
+                <p class="text-[10px] opacity-40 mt-2">Example: <code>subdomain.{{ baseDomain || 'example.com' }}</code></p>
               </div>
             </div>
 
-            <div v-if="proxyMappings.length === 0" class="text-center py-12 opacity-40">
-              <Icon name="material-symbols:info-outline" class="text-4xl mb-2" />
-              <p>No other servers found to map.</p>
-            </div>
+            <!-- Server Mappings -->
+            <div class="space-y-4">
+              <h4 class="font-bold text-sm uppercase tracking-widest opacity-40 flex items-center gap-2">
+                <Icon name="mdi:server" />
+                Backend Server Mappings
+              </h4>
+              
+              <div v-if="proxyMappings.length === 0" class="text-center py-12 opacity-40 bg-base-100/30 rounded-3xl border border-dashed border-base-content/10">
+                <Icon name="material-symbols:info-outline" class="text-4xl mb-2" />
+                <p>No other servers found to map.</p>
+              </div>
 
-            <div v-else class="grid grid-cols-1 gap-6">
-              <div v-for="mapping in proxyMappings" :key="mapping.serverName" class="bg-base-100/30 p-6 rounded-3xl border border-base-content/5 space-y-4 transition-all hover:bg-base-100/50">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                      <Icon name="mdi:minecraft" class="text-2xl" />
-                    </div>
-                    <div>
-                      <p class="font-bold text-lg">{{ mapping.serverName }}</p>
-                      <p class="text-xs font-mono opacity-40">{{ mapping.address }}</p>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-6">
-                    <div class="form-control">
-                      <label class="label cursor-pointer gap-3">
-                        <span class="label-text text-xs font-bold opacity-50 uppercase">Enabled</span>
-                        <input type="checkbox" v-model="mapping.isMapped" class="toggle toggle-primary toggle-sm" />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="mapping.isMapped" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-base-content/5 animate-in fade-in slide-in-from-top-2">
-                  <div class="space-y-3">
-                    <label class="text-[10px] font-bold opacity-50 uppercase tracking-wider block">Mapping Name</label>
-                    <input 
-                      v-model="mapping.mappingName" 
-                      type="text" 
-                      placeholder="e.g. lobby, survival" 
-                      class="input input-bordered w-full rounded-xl bg-base-200/50 border-base-content/5 text-sm font-mono"
-                    />
-                    <p class="text-[10px] opacity-40">The name used inside the proxy config (e.g. /server {{ mapping.mappingName }})</p>
-                  </div>
-
-                  <div class="space-y-3">
-                    <label class="text-[10px] font-bold opacity-50 uppercase tracking-wider block">Forced Hostnames</label>
-                    <div class="flex flex-col gap-2">
-                      <div v-for="(host, idx) in mapping.hostnames" :key="idx" class="flex gap-2">
-                        <input 
-                          v-model="mapping.hostnames[idx]" 
-                          type="text" 
-                          placeholder="play.example.com" 
-                          class="input input-bordered flex-1 rounded-xl bg-base-200/50 border-base-content/5 text-sm font-mono"
-                        />
-                        <button @click="mapping.hostnames.splice(idx, 1)" class="btn btn-ghost btn-sm btn-square text-error">
-                          <Icon name="material-symbols:delete-rounded" />
-                        </button>
+              <div v-else class="grid grid-cols-1 gap-4">
+                <div v-for="mapping in proxyMappings" :key="mapping.serverName" class="bg-base-100/30 p-5 rounded-3xl border border-base-content/5 transition-all hover:border-primary/20 group">
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <!-- Server Info -->
+                    <div class="flex items-center gap-4 min-w-[200px]">
+                      <div 
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-xl border transition-colors"
+                        :class="mapping.isMapped ? 'bg-primary/20 text-primary border-primary/20' : 'bg-base-content/5 text-base-content/20 border-base-content/5'"
+                      >
+                        <Icon name="mdi:minecraft" />
                       </div>
-                      <button @click="mapping.hostnames.push('')" class="btn btn-ghost btn-xs w-fit gap-2 opacity-50 hover:opacity-100">
-                        <Icon name="material-symbols:add-rounded" />
-                        Add Hostname
-                      </button>
+                      <div>
+                        <p class="font-bold">{{ mapping.serverName }}</p>
+                        <p class="text-[10px] font-mono opacity-40">{{ mapping.address }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Subdomain Wizard -->
+                    <div class="flex-1 flex flex-col md:flex-row items-center gap-4">
+                      <div class="form-control flex-1 w-full" v-if="mapping.isMapped">
+                        <div class="flex items-center gap-2 bg-base-200/50 p-1.5 rounded-xl border border-base-content/5 group-hover:border-primary/20 transition-all">
+                          <input 
+                            v-model="mapping.subdomain" 
+                            type="text" 
+                            placeholder="subdomain" 
+                            class="input input-ghost input-sm flex-1 font-mono text-sm focus:bg-transparent"
+                          />
+                          <span class="text-xs font-bold opacity-30 pr-3">.{{ baseDomain || 'domain' }}</span>
+                        </div>
+                      </div>
+                      <div v-else class="flex-1 flex items-center justify-center text-[10px] font-bold opacity-20 uppercase tracking-widest">
+                        Not Enabled
+                      </div>
+
+                      <div class="flex items-center gap-4 shrink-0">
+                        <label class="label cursor-pointer justify-start gap-3 p-0" v-if="mapping.isMapped">
+                          <input type="checkbox" v-model="mapping.isInTry" class="checkbox checkbox-primary checkbox-xs rounded-md" />
+                          <span class="label-text text-[10px] font-bold opacity-60 uppercase">Fallback</span>
+                        </label>
+                        <div class="divider divider-horizontal m-0 h-4 self-center opacity-10" v-if="mapping.isMapped"></div>
+                        <label class="label cursor-pointer gap-3 p-0">
+                          <span class="label-text text-xs font-bold opacity-50 uppercase">{{ mapping.isMapped ? 'Enabled' : 'Disabled' }}</span>
+                          <input type="checkbox" v-model="mapping.isMapped" class="toggle toggle-primary toggle-sm" />
+                        </label>
+                      </div>
                     </div>
                   </div>
-
-                  <div class="md:col-span-2">
-                    <label class="label cursor-pointer justify-start gap-4 p-0">
-                      <input type="checkbox" v-model="mapping.isInTry" class="checkbox checkbox-primary checkbox-sm rounded-md" />
-                      <span class="label-text text-xs font-bold">Include in 'try' sequence (Default fallback servers)</span>
-                    </label>
-                  </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Help Legend -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-base-content/5">
+              <div class="flex gap-3 text-xs opacity-60">
+                <Icon name="lucide:info" class="shrink-0 mt-1" />
+                <p><strong>Subdomain @</strong>: Maps the server directly to your base domain (e.g. <code>weexnes.dev</code>).</p>
+              </div>
+              <div class="flex gap-3 text-xs opacity-60">
+                <Icon name="lucide:alert-circle" class="shrink-0 mt-1" />
+                <p><strong>Fallbacks</strong>: If enabled, Velocity will use this server as a default entry point if no other routing matches.</p>
               </div>
             </div>
           </div>
@@ -730,6 +735,7 @@ const saveProperties = async () => {
 
 const proxyMappings = ref<any[]>([])
 const mappingLoading = ref(false)
+const baseDomain = ref('')
 
 const fetchProxyMappings = async () => {
   if (server.value?.project !== 'velocity') return
@@ -739,6 +745,7 @@ const fetchProxyMappings = async () => {
       headers: { Authorization: `Bearer ${useCookie('token').value}` }
     })
     proxyMappings.value = data.mappings
+    baseDomain.value = data.baseDomain
   } catch (error) {
     console.error('Failed to fetch proxy mappings:', error)
   } finally {
@@ -747,20 +754,32 @@ const fetchProxyMappings = async () => {
 }
 
 const saveProxyMapping = async () => {
+  // Validation
+  const enabledMappings = proxyMappings.value.filter(m => m.isMapped)
+  if (enabledMappings.some(m => !m.subdomain)) {
+    alert('Please provide a subdomain for all enabled mappings.')
+    return
+  }
+  if (!baseDomain.value) {
+    alert('Please provide a base domain.')
+    return
+  }
+
   mappingLoading.value = true
   try {
     await $fetch('/api/setProxyMapping', {
       method: 'POST',
       body: {
         proxyName: serverName,
-        mappings: proxyMappings.value
+        mappings: proxyMappings.value,
+        baseDomain: baseDomain.value
       },
       headers: { Authorization: `Bearer ${useCookie('token').value}` }
     })
     alert('Proxy mappings saved successfully!')
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to save proxy mappings:', error)
-    alert('Failed to save mappings')
+    alert(`Failed to save mappings: ${error.statusMessage || error.message}`)
   } finally {
     mappingLoading.value = false
   }
