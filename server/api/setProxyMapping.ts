@@ -31,7 +31,19 @@ export default defineEventHandler(async (event) => {
             const content = await fs.readFile(configPath, 'utf-8');
             velocityConfig = toml.parse(content);
         } catch (e) {
-            velocityConfig = {};
+            // Default sane config if missing
+            velocityConfig = {
+                config_version: "1.0",
+                bind: "0.0.0.0:25577",
+                "motd": "§bA Beacon Proxy",
+                "show-max-players": 500,
+                "online-mode": true,
+                "prevent-client-proxy-connections": false,
+                "player-info-forwarding-mode": "none",
+                "forwarding-secret": "",
+                "announce-forge": false,
+                "ping-passthrough": "DISABLED"
+            };
         }
 
         // Update servers section
@@ -57,7 +69,28 @@ export default defineEventHandler(async (event) => {
             }
         }
         
-        velocityConfig.try = trySequence;
+        // If no servers are marked as "isInTry", use the first mapped server as fallback
+        if (trySequence.length === 0 && Object.keys(velocityConfig.servers).length > 0) {
+            trySequence.push(Object.keys(velocityConfig.servers)[0]);
+        }
+        
+        // CRITICAL: try MUST be inside the servers section
+        velocityConfig.servers.try = trySequence;
+        
+        // Remove try from root level if it exists from previous buggy versions
+        if (velocityConfig.try) {
+            delete velocityConfig.try;
+        }
+
+        // Ensure bind is present
+        if (!velocityConfig.bind) {
+            velocityConfig.bind = "0.0.0.0:25577";
+        }
+        
+        // Ensure show-max-players is an integer to avoid ClassCastException
+        if (velocityConfig['show-max-players'] && typeof velocityConfig['show-max-players'] === 'object') {
+            velocityConfig['show-max-players'] = 500;
+        }
 
         await fs.writeFile(configPath, toml.stringify(velocityConfig), 'utf-8');
 

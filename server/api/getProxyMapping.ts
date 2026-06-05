@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
         const proxyServers = velocityConfig.servers || {};
         const forcedHosts = velocityConfig['forced-hosts'] || {};
-        const trySequence = velocityConfig.try || [];
+        const trySequence = (velocityConfig.servers && velocityConfig.servers.try) || velocityConfig.try || [];
         const baseDomain = proxy.baseDomain || '';
         
         // Find all other servers
