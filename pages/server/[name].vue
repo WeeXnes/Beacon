@@ -528,7 +528,7 @@ const tabs = computed(() => {
     tabs.push({ id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' })
   }
 
-  return [...tabs, ...baseTabs.slice(1, 3), ...baseTabs.slice(4)]
+  return [...tabs, ...baseTabs.slice(1, 3), ...baseTabs.slice(3)]
 })
 
 const javaVersions = ref<any[]>([])
