@@ -514,21 +514,20 @@ const tabs = computed(() => {
 
   const tabs = [...baseTabs.slice(0, 1)]
   const project = server.value?.project || ''
-  const version = server.value?.version || ''
-  
-  const isVanilla = project === 'vanilla' || version.toLowerCase().includes('vanilla')
-  const isVelocity = project === 'velocity'
 
-  if (isVelocity) {
+  if (project === 'velocity') {
     tabs.push({ id: 'proxy-mapping', label: 'Proxy Mapping', icon: 'lucide:shuffle' })
-  } else if (!isVanilla) {
-    tabs.push({ id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' })
-    tabs.push({ id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' })
   } else {
     tabs.push({ id: 'players', label: 'Players', icon: 'material-symbols:group-rounded' })
+    if (project !== 'vanilla') {
+        tabs.push({ id: 'marketplace', label: 'Marketplace', icon: 'material-symbols:shopping-cart-rounded' })
+    }
   }
 
-  return [...tabs, ...baseTabs.slice(1, 3), ...baseTabs.slice(3)]
+  // Include remaining base tabs, skipping properties if velocity
+  const remaining = project === 'velocity' ? [...baseTabs.slice(1, 2), ...baseTabs.slice(3)] : [...baseTabs.slice(1)]
+  
+  return [...tabs, ...remaining]
 })
 
 const javaVersions = ref<any[]>([])
