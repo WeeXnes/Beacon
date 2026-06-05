@@ -86,15 +86,7 @@
               <div class="w-3 h-3 rounded-full bg-success/50"></div>
             </div>
             <div class="flex items-center gap-3">
-              <span class="text-xs font-mono text-white/40 uppercase tracking-widest">Live Terminal</span>
-              <div 
-                class="badge badge-xs cursor-pointer hover:opacity-80 transition-opacity" 
-                :class="isLive ? 'badge-success' : 'badge-error'"
-                @click="reconnect"
-                title="Click to reconnect"
-              >
-                {{ isLive ? 'LIVE' : 'OFFLINE' }}
-              </div>
+              <span class="text-xs font-mono text-white/40 uppercase tracking-widest">Terminal</span>
             </div>
           </div>
           <div ref="terminal" class="h-[400px] overflow-y-auto p-6 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-white/10">

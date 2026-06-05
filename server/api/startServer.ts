@@ -88,6 +88,10 @@ export default defineEventHandler(async (event) => {
                 if (server.status !== 'online') {
                     server.status = 'online';
                     consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
+                    
+                    // Trigger a re-sync of properties to get correct maxPlayers
+                    // Since Beacon's state is memory-based, re-reading properties would be ideal, 
+                    // but we can simply force a refresh of server info on the client.
                 }
             }
 
