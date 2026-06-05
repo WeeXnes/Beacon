@@ -14,9 +14,6 @@ export default defineNitroPlugin((nitroApp) => {
     // Verification of running processes
     console.log("Verifying running servers...");
     environment.settings.servers.forEach(server => {
-        if (server.publicStatusEnabled === undefined) {
-            server.publicStatusEnabled = false;
-        }
         if (server.pid) {
             try {
                 // Check if process exists by sending signal 0
