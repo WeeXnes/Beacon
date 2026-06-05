@@ -29,13 +29,13 @@
       </div>
 
       <div class="grid grid-cols-2 gap-4 my-2">
-        <div class="bg-base-300/50 rounded-xl p-3">
+        <div v-if="server.project !== 'velocity'" class="bg-base-300/50 rounded-xl p-3">
           <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Players</p>
           <p class="font-bold text-sm">
             {{ server.status === 'online' ? (server.onlinePlayers?.length || 0) : 0 }} / {{ server.maxPlayers || '--' }}
           </p>
         </div>
-        <div class="bg-base-300/50 rounded-xl p-3">
+        <div class="bg-base-300/50 rounded-xl p-3" :class="{'col-span-2': server.project === 'velocity'}">
           <p class="text-[10px] uppercase tracking-wider font-bold text-base-content/40 mb-1">Max RAM</p>
           <p class="font-bold text-sm">{{ server.maxMemory }}GB</p>
         </div>

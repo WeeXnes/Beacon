@@ -54,6 +54,7 @@ export const useServers = () => {
     } catch (error: any) {
       console.error('Failed to fetch servers:', error);
       if (error.statusCode === 401) {
+        stopPolling(); // Ensure polling stops
         const token = useCookie('token');
         token.value = null;
         useRouter().push('/login');
