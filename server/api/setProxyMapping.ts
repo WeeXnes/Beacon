@@ -89,10 +89,22 @@ export default defineEventHandler(async (event) => {
         
         // Ensure show-max-players is an integer to avoid ClassCastException
         if (velocityConfig['show-max-players']) {
-            velocityConfig['show-max-players'] = parseInt(velocityConfig['show-max-players'].toString());
+            velocityConfig['show-max-players'] = Number(velocityConfig['show-max-players']);
         } else {
             velocityConfig['show-max-players'] = 500;
         }
+
+        // Helper to sanitize numeric values in the config object
+        const sanitizeNumeric = (obj: any) => {
+            for (const key in obj) {
+                if (typeof obj[key] === 'string' && !isNaN(Number(obj[key])) && obj[key].trim() !== '') {
+                    obj[key] = Number(obj[key]);
+                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    sanitizeNumeric(obj[key]);
+                }
+            }
+        };
+        sanitizeNumeric(velocityConfig);
 
         await fs.writeFile(configPath, toml.stringify(velocityConfig), 'utf-8');
 
