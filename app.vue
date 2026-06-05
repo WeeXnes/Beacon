@@ -49,9 +49,7 @@ const logout = () => {
 
 onMounted(async () => {
   const token = useCookie('token')
-  if (!token.value && !isLoginPage.value && !isStatusPage.value) {
-    router.push('/login')
-  } else if (token.value) {
+  if (token.value) {
     startPolling(3000)
   }
 })
