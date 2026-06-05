@@ -116,6 +116,8 @@ export default defineEventHandler(async (event) => {
                 await execa(javaBinary, ['-jar', downloadName, '--installServer'], { cwd: serverDir });
                 consola.info(`[INSTALL] ✅ Forge files generated.`);
                 
+                const files = fs.readdirSync(serverDir);
+                
                 // Modern Forge (1.17+) often generates 'run.bat/sh'.
                 // If no jar found, look for the 'forge-*-server.jar' or 'forge-*-universal.jar'
                 // The installer creates a 'forge-*.jar' in some versions.
