@@ -31,18 +31,21 @@ export default defineEventHandler(async (event) => {
             const content = await fs.readFile(configPath, 'utf-8');
             velocityConfig = toml.parse(content);
         } catch (e) {
-            // Default sane config if missing
             velocityConfig = {
-                config_version: "1.0",
-                bind: "0.0.0.0:25577",
-                "motd": "§bA Beacon Proxy",
+                "config-version": "2.7",
+                "bind": "0.0.0.0:25577",
+                "motd": "A Velocity Server",
                 "show-max-players": 500,
                 "online-mode": true,
+                "force-key-authentication": true,
                 "prevent-client-proxy-connections": false,
-                "player-info-forwarding-mode": "none",
-                "forwarding-secret": "",
+                "player-info-forwarding-mode": "NONE",
+                "forwarding-secret-file": "forwarding.secret",
                 "announce-forge": false,
-                "ping-passthrough": "DISABLED"
+                "kick-existing-players": false,
+                "ping-passthrough": "DISABLED",
+                "sample-players-in-ping": false,
+                "enable-player-address-logging": true
             };
         }
 
@@ -81,30 +84,6 @@ export default defineEventHandler(async (event) => {
         if (velocityConfig.try) {
             delete velocityConfig.try;
         }
-
-        // Ensure bind is present
-        if (!velocityConfig.bind) {
-            velocityConfig.bind = "0.0.0.0:25577";
-        }
-        
-        // Ensure show-max-players is an integer to avoid ClassCastException
-        if (velocityConfig['show-max-players']) {
-            velocityConfig['show-max-players'] = Number(velocityConfig['show-max-players']);
-        } else {
-            velocityConfig['show-max-players'] = 500;
-        }
-
-        // Helper to sanitize numeric values in the config object
-        const sanitizeNumeric = (obj: any) => {
-            for (const key in obj) {
-                if (typeof obj[key] === 'string' && !isNaN(Number(obj[key])) && obj[key].trim() !== '') {
-                    obj[key] = Number(obj[key]);
-                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    sanitizeNumeric(obj[key]);
-                }
-            }
-        };
-        sanitizeNumeric(velocityConfig);
 
         await fs.writeFile(configPath, toml.stringify(velocityConfig), 'utf-8');
 
