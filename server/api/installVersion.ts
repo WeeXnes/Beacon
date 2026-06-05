@@ -116,18 +116,17 @@ export default defineEventHandler(async (event) => {
                 await execa(javaBinary, ['-jar', downloadName, '--installServer'], { cwd: serverDir });
                 consola.info(`[INSTALL] ✅ Forge files generated.`);
                 
-                // Try to find the server jar. In newer versions it's often 'run.sh/bat' or a specific jar.
-                // For older versions it's forge-xxx-universal.jar or similar.
-                const files = fs.readdirSync(serverDir);
-                const forgeJar = files.find(f => f.includes('forge') && f.endsWith('.jar') && !f.includes('installer'));
+                // Modern Forge (1.17+) often generates 'run.bat/sh'.
+                // If no jar found, look for the 'forge-*-server.jar' or 'forge-*-universal.jar'
+                // The installer creates a 'forge-*.jar' in some versions.
+                const forgeJar = files.find(f => f.startsWith('forge-') && f.endsWith('.jar') && !f.includes('installer'));
                 
                 if (forgeJar) {
                     jarName = forgeJar;
                 } else {
-                    // Modern forge uses a library-based launch. We'll look for a 'user_jvm_args.txt' or similar marker.
-                    // For simplicity, we'll assume the user might need to specify the jar if not found, 
-                    // but usually 'forge-xxx.jar' is present.
-                    jarName = downloadName.replace('-installer', ''); // Best guess
+                     // Check for a specific pattern for 1.20.1+
+                     const serverJar = files.find(f => f.startsWith('forge-') && f.endsWith('.jar'));
+                     jarName = serverJar || downloadName.replace('-installer', '');
                 }
                 
                 // Cleanup installer

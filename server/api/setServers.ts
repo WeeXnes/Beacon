@@ -1,6 +1,7 @@
 import { defineEventHandler } from 'h3';
 import { getServerByName } from "~/types/MinecraftServer";
 import { saveJsonFile } from "~/util/jsonLoader";
+import { environment } from "~/core/globals";
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
