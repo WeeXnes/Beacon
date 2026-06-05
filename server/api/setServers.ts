@@ -13,6 +13,12 @@ export default defineEventHandler(async (event) => {
 
     try {
         consola.info(`[CONFIG] 📝 Updating global server list`);
+        // Ensure property exists
+        serverList.forEach((s: any) => {
+            if (s.publicStatusEnabled === undefined) {
+                s.publicStatusEnabled = false;
+            }
+        });
         environment.settings.servers = serverList;
         saveJsonFile();
         consola.success(`[CONFIG] ✅ Global server list updated`);

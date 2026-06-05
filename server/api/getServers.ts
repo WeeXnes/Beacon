@@ -6,8 +6,9 @@ import { getPropertiesPath } from "~/types/MinecraftServer";
 
 export default defineEventHandler(async (event) => {
     try {
+        const servers = environment.settings.servers.map(s => ({ ...s }));
         // Enrich servers with maxPlayers from server.properties
-        for (const server of environment.settings.servers) {
+        for (const server of servers) {
             try {
                 const propsPath = getPropertiesPath(server);
                 const propsData = await fs.readFile(propsPath, 'utf-8');
@@ -20,7 +21,7 @@ export default defineEventHandler(async (event) => {
                 server.maxPlayers = undefined;
             }
         }
-        return environment.settings.servers;
+        return servers;
     } catch (error) {
         console.error('Error fetching servers:', error);
     }

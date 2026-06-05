@@ -344,20 +344,10 @@
               </label>
             </div>
 
-            <div class="form-control max-w-md">
-              <label class="label cursor-pointer justify-start gap-4">
-                <input type="checkbox" v-model="localSettings.publicStatusEnabled" class="toggle toggle-primary" />
-                <span class="label-text font-bold">Enable Public Status Page</span>
-              </label>
-              <label class="label">
-                <span class="label-text-alt text-base-content/40">
-                  Allows anyone with the link to view server status, players, and chat log.
-                </span>
-              </label>
-            </div>
-
-            <div v-if="localSettings.publicStatusEnabled" class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
-              <div class="flex items-center justify-between gap-4">
+            <!-- Public Status Page is enabled by default -->
+            <div class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
+                <p class="text-sm text-primary/70">Public status page is enabled for this server.</p>
+              <div class="flex items-center justify-between gap-4 mt-4">
                 <div class="flex flex-col">
                   <span class="text-xs font-bold text-primary uppercase tracking-wider">Public URL</span>
                   <span class="text-sm font-mono break-all">/status/{{ server?.name }}</span>
@@ -418,8 +408,7 @@ const installLoading = ref<string | null>(null)
 
 const localSettings = ref({
   maxMemory: 1,
-  javaVersionName: undefined as string | undefined,
-  publicStatusEnabled: false
+  javaVersionName: undefined as string | undefined
 })
 
 // Initialize local settings from server data
@@ -427,19 +416,17 @@ watch(server, (newVal) => {
   if (newVal && activeTab.value !== 'settings') {
     localSettings.value = {
       maxMemory: newVal.maxMemory,
-      javaVersionName: newVal.javaVersionName,
-      publicStatusEnabled: !!newVal.publicStatusEnabled
+      javaVersionName: newVal.javaVersionName
     }
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 // Also sync if we just switched to settings tab to ensure we have latest data
 watch(activeTab, (newTab) => {
   if (newTab === 'settings' && server.value) {
     localSettings.value = {
       maxMemory: server.value.maxMemory,
-      javaVersionName: server.value.javaVersionName,
-      publicStatusEnabled: !!server.value.publicStatusEnabled
+      javaVersionName: server.value.javaVersionName
     }
   }
 })
@@ -521,7 +508,6 @@ const saveBeaconSettings = async () => {
   // Update local server object with our changes
   server.value.maxMemory = localSettings.value.maxMemory
   server.value.javaVersionName = localSettings.value.javaVersionName
-  server.value.publicStatusEnabled = localSettings.value.publicStatusEnabled
 
   try {
     await $fetch('/api/setServers', {

@@ -14,10 +14,6 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 404, statusMessage: "Server not found" });
     }
 
-    if (!server.publicStatusEnabled) {
-        throw createError({ statusCode: 403, statusMessage: "Public status is disabled for this server" });
-    }
-
     let publicLogs: string[] = [];
     try {
         const logPath = getLogsPath(server);
