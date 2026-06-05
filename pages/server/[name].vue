@@ -599,7 +599,7 @@ const installContent = async (project: any) => {
     let loader = ''
     let ver = ''
     
-    if (server.value?.version) {
+    if (server.value && server.value.version) {
         const parts = server.value.version.split(' ')
         loader = parts[0] || ''
         ver = parts[1] || ''
