@@ -22,20 +22,32 @@ export default defineEventHandler(async (event) => {
             velocityConfig = {};
         }
 
-        if (!velocityConfig.servers) velocityConfig.servers = {};
-
         // Update servers section
         velocityConfig.servers = {};
+        velocityConfig['forced-hosts'] = {};
+        const trySequence: string[] = [];
+
         for (const m of mappings) {
             if (m.isMapped) {
-                velocityConfig.servers[m.name] = m.address;
+                velocityConfig.servers[m.mappingName] = m.address;
+                
+                // Handle forced hosts
+                if (m.hostnames && Array.isArray(m.hostnames)) {
+                    for (const host of m.hostnames) {
+                        if (host.trim()) {
+                            velocityConfig['forced-hosts'][host.trim()] = [m.mappingName];
+                        }
+                    }
+                }
+
+                // Handle try sequence
+                if (m.isInTry) {
+                    trySequence.push(m.mappingName);
+                }
             }
         }
         
-        // Also ensure forced-hosts has a default if missing, or just keep as is
-        if (!velocityConfig['forced-hosts']) {
-            velocityConfig['forced-hosts'] = {};
-        }
+        velocityConfig.try = trySequence;
 
         await fs.writeFile(configPath, toml.stringify(velocityConfig), 'utf-8');
 

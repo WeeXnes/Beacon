@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
         }
 
         const proxyServers = velocityConfig.servers || {};
+        const forcedHosts = velocityConfig['forced-hosts'] || {};
+        const trySequence = velocityConfig.try || [];
         
         // Find all other servers
         const allServers = environment.settings.servers.filter(s => s.name !== proxyName && s.project !== 'velocity');
@@ -41,15 +43,29 @@ export default defineEventHandler(async (event) => {
                 // Ignore if properties not found
             }
 
+            // Find if this server is mapped under ANY name in velocity
+            const currentMappingName = Object.keys(proxyServers).find(name => proxyServers[name] === `127.0.0.1:${port}`) || s.name;
+            const isMapped = Object.values(proxyServers).includes(`127.0.0.1:${port}`);
+
+            // Find hostnames for this mapping name
+            const hostnames = Object.keys(forcedHosts).filter(host => {
+                const targets = forcedHosts[host];
+                return Array.isArray(targets) && targets.includes(currentMappingName);
+            });
+
             return {
-                name: s.name,
+                serverName: s.name,
+                mappingName: currentMappingName,
                 address: `127.0.0.1:${port}`,
-                isMapped: !!proxyServers[s.name]
+                isMapped,
+                hostnames,
+                isInTry: trySequence.includes(currentMappingName)
             };
         }));
 
         return {
-            mappings
+            mappings,
+            trySequence
         };
     } catch (error: any) {
         throw createError({ statusCode: 500, statusMessage: error.message });

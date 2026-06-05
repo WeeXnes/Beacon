@@ -225,17 +225,20 @@
       <div v-if="activeTab === 'proxy-mapping'">
         <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl min-h-[400px]">
           <div class="p-6 border-b border-base-content/5 flex items-center justify-between bg-base-100/30">
-            <h3 class="font-bold flex items-center gap-2">
-              <Icon name="lucide:shuffle" class="text-primary" />
-              Integrated Proxy Mapping
-            </h3>
+            <div class="flex flex-col">
+              <h3 class="font-bold flex items-center gap-2">
+                <Icon name="lucide:shuffle" class="text-primary" />
+                Advanced Proxy Mapping
+              </h3>
+              <p class="text-[10px] opacity-50 uppercase tracking-widest font-bold mt-1">Configure Servers & Forced Hosts</p>
+            </div>
             <button 
               @click="saveProxyMapping" 
               class="btn btn-primary btn-sm rounded-xl px-6"
               :disabled="mappingLoading"
             >
               <span v-if="mappingLoading" class="loading loading-spinner loading-xs"></span>
-              Save Mappings
+              Save Configuration
             </button>
           </div>
           
@@ -243,27 +246,99 @@
              <span class="loading loading-spinner loading-lg text-primary"></span>
           </div>
 
-          <div v-else class="p-6 space-y-4">
-            <p class="text-sm text-base-content/60 mb-6">Link your Beacon servers to this Velocity proxy. We've automatically detected their local ports.</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div v-for="mapping in proxyMappings" :key="mapping.name" class="bg-base-100/50 p-4 rounded-2xl border border-base-content/5 flex items-center justify-between group">
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <Icon name="mdi:minecraft" />
-                  </div>
-                  <div>
-                    <p class="font-bold">{{ mapping.name }}</p>
-                    <p class="text-[10px] font-mono opacity-50">{{ mapping.address }}</p>
-                  </div>
+          <div v-else class="p-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
+              <div class="bg-primary/5 border border-primary/10 p-4 rounded-2xl flex gap-4">
+                <Icon name="lucide:shuffle" class="text-primary text-xl shrink-0 mt-1" />
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wider text-primary">Routing Logic</p>
+                  <p class="text-[10px] opacity-70 mt-1">Velocity uses <strong>forced-hosts</strong> to route by domain name. The <strong>try</strong> list is only used as a fallback if no hostname match is found.</p>
                 </div>
-                <input type="checkbox" v-model="mapping.isMapped" class="toggle toggle-primary" />
+              </div>
+              <div class="bg-success/5 border border-success/10 p-4 rounded-2xl flex gap-4">
+                <Icon name="lucide:check-circle" class="text-success text-xl shrink-0 mt-1" />
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wider text-success">Best Practice</p>
+                  <p class="text-[10px] opacity-70 mt-1">Keep only your main lobby or default server in the <strong>try</strong> list. Use hostnames for everything else.</p>
+                </div>
+              </div>
+              <div class="bg-warning/5 border border-warning/10 p-4 rounded-2xl flex gap-4">
+                <Icon name="lucide:alert-triangle" class="text-warning text-xl shrink-0 mt-1" />
+                <div>
+                  <p class="text-xs font-bold uppercase tracking-wider text-warning">DNS Setup</p>
+                  <p class="text-[10px] opacity-70 mt-1">Ensure all hostnames point to this proxy's IP. Velocity will handle the internal routing based on the connection hostname.</p>
+                </div>
               </div>
             </div>
 
             <div v-if="proxyMappings.length === 0" class="text-center py-12 opacity-40">
               <Icon name="material-symbols:info-outline" class="text-4xl mb-2" />
               <p>No other servers found to map.</p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 gap-6">
+              <div v-for="mapping in proxyMappings" :key="mapping.serverName" class="bg-base-100/30 p-6 rounded-3xl border border-base-content/5 space-y-4 transition-all hover:bg-base-100/50">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                      <Icon name="mdi:minecraft" class="text-2xl" />
+                    </div>
+                    <div>
+                      <p class="font-bold text-lg">{{ mapping.serverName }}</p>
+                      <p class="text-xs font-mono opacity-40">{{ mapping.address }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-6">
+                    <div class="form-control">
+                      <label class="label cursor-pointer gap-3">
+                        <span class="label-text text-xs font-bold opacity-50 uppercase">Enabled</span>
+                        <input type="checkbox" v-model="mapping.isMapped" class="toggle toggle-primary toggle-sm" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="mapping.isMapped" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-base-content/5 animate-in fade-in slide-in-from-top-2">
+                  <div class="space-y-3">
+                    <label class="text-[10px] font-bold opacity-50 uppercase tracking-wider block">Mapping Name</label>
+                    <input 
+                      v-model="mapping.mappingName" 
+                      type="text" 
+                      placeholder="e.g. lobby, survival" 
+                      class="input input-bordered w-full rounded-xl bg-base-200/50 border-base-content/5 text-sm font-mono"
+                    />
+                    <p class="text-[10px] opacity-40">The name used inside the proxy config (e.g. /server {{ mapping.mappingName }})</p>
+                  </div>
+
+                  <div class="space-y-3">
+                    <label class="text-[10px] font-bold opacity-50 uppercase tracking-wider block">Forced Hostnames</label>
+                    <div class="flex flex-col gap-2">
+                      <div v-for="(host, idx) in mapping.hostnames" :key="idx" class="flex gap-2">
+                        <input 
+                          v-model="mapping.hostnames[idx]" 
+                          type="text" 
+                          placeholder="play.example.com" 
+                          class="input input-bordered flex-1 rounded-xl bg-base-200/50 border-base-content/5 text-sm font-mono"
+                        />
+                        <button @click="mapping.hostnames.splice(idx, 1)" class="btn btn-ghost btn-sm btn-square text-error">
+                          <Icon name="material-symbols:delete-rounded" />
+                        </button>
+                      </div>
+                      <button @click="mapping.hostnames.push('')" class="btn btn-ghost btn-xs w-fit gap-2 opacity-50 hover:opacity-100">
+                        <Icon name="material-symbols:add-rounded" />
+                        Add Hostname
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="md:col-span-2">
+                    <label class="label cursor-pointer justify-start gap-4 p-0">
+                      <input type="checkbox" v-model="mapping.isInTry" class="checkbox checkbox-primary checkbox-sm rounded-md" />
+                      <span class="label-text text-xs font-bold">Include in 'try' sequence (Default fallback servers)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -352,11 +427,20 @@
             <button @click="saveProperties" class="btn btn-primary btn-sm rounded-xl px-6">Save Changes</button>
           </div>
           <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             <div v-for="(val, key) in properties" :key="key" class="form-control">
-                <label class="label"><span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/50">{{ key }}</span></label>
-                <input v-if="typeof val !== 'boolean'" v-model="properties[key]" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5" />
-                <input v-else type="checkbox" v-model="properties[key]" class="toggle toggle-primary" />
-             </div>
+             <template v-for="(val, key) in properties" :key="key">
+                <div v-if="typeof val !== 'object'" class="form-control">
+                  <label class="label"><span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/50">{{ key }}</span></label>
+                  <input v-if="typeof val !== 'boolean'" v-model="properties[key]" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5" />
+                  <input v-else type="checkbox" v-model="properties[key]" class="toggle toggle-primary" />
+                </div>
+             </template>
+          </div>
+          <!-- Specialized sections for Velocity objects could go here, but Proxy Mapping handles the most important ones -->
+          <div v-if="server?.project === 'velocity'" class="px-8 pb-8">
+            <div class="alert alert-info rounded-2xl bg-primary/10 border-primary/20 text-primary py-3">
+              <Icon name="lucide:info" />
+              <span class="text-xs font-bold">Complex Velocity objects (servers, forced-hosts) are managed in the <span class="underline">Proxy Mapping</span> tab.</span>
+            </div>
           </div>
         </div>
       </div>
