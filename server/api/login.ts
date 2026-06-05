@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
         }
 
         const token = jwt.sign({ userId: 'admin' }, environment.jwt_globals.secret!, {
-            expiresIn: '1h',
+            expiresIn: '30d',
         });
 
         consola.info(`[LOGIN] 🔑 Admin logged in successfully`);
