@@ -484,7 +484,7 @@ import { parse, stringify } from 'ini'
 const route = useRoute()
 const router = useRouter()
 const serverName = route.params.name as string
-const { servers, startServer, stopServer, startPolling, stopPolling } = useServers()
+const { servers, startServer, stopServer, startPolling, stopPolling, fetchServers } = useServers()
 const { logs, isLive, fetchLogs, sendCommand, reconnect } = useConsole(serverName)
 
 const server = computed(() => servers.value.find(s => s.name === serverName))
