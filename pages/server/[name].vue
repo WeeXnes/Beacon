@@ -78,33 +78,33 @@
     <!-- Tab Content -->
     <div class="min-h-[500px]">
       <div v-if="activeTab === 'console'" class="space-y-4">
-        <div class="bg-black/90 rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
-          <div class="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/5">
-            <div class="flex gap-1.5">
-              <div class="w-3 h-3 rounded-full bg-error/50"></div>
-              <div class="w-3 h-3 rounded-full bg-warning/50"></div>
-              <div class="w-3 h-3 rounded-full bg-success/50"></div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="text-xs font-mono text-white/40 uppercase tracking-widest">Terminal</span>
-            </div>
+        <div class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden shadow-xl">
+          <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
+            <h3 class="font-bold flex items-center gap-2">
+              <Icon name="material-symbols:terminal-rounded" class="text-primary" />
+              Console Output
+            </h3>
+            <button @click="clearLogs" class="btn btn-ghost btn-sm text-base-content/50">Clear Logs</button>
           </div>
-          <div ref="terminal" class="h-[400px] overflow-y-auto p-6 font-mono text-sm space-y-1 scrollbar-thin scrollbar-thumb-white/10">
-            <div v-for="(line, i) in logs" :key="i" class="flex gap-4 group">
-              <span class="text-white/20 select-none w-4 text-right">{{ i + 1 }}</span>
-              <span class="text-white/80 break-all">{{ line }}</span>
-            </div>
+          
+          <div ref="terminal" class="h-[400px] overflow-y-auto p-6 font-mono text-xs bg-base-100/50">
+             <div v-for="(line, i) in logs" :key="i" class="mb-0.5 whitespace-pre-wrap break-all">
+               <span class="text-base-content/30 mr-4">{{ new Date().toLocaleTimeString() }}</span>
+               <span class="text-base-content/80">{{ line }}</span>
+             </div>
           </div>
-          <div class="p-4 bg-white/5 border-t border-white/5 flex gap-4">
-            <Icon name="material-symbols:chevron-right" class="text-primary text-2xl" />
-            <input 
-              v-model="commandInput" 
-              @keyup.enter="handleSendCommand"
-              type="text" 
-              placeholder="Enter a server command..." 
-              class="bg-transparent border-none outline-none flex-1 text-white font-mono placeholder:text-white/20"
-            />
-            <kbd class="kbd kbd-sm bg-white/10 border-none text-white/40">ENTER</kbd>
+          
+          <div class="p-4 bg-base-100 border-t border-base-content/5">
+            <div class="flex gap-2">
+              <input 
+                v-model="commandInput" 
+                @keyup.enter="handleSendCommand"
+                type="text" 
+                placeholder="Enter server command..." 
+                class="input input-bordered w-full rounded-xl bg-base-200 border-base-content/10 font-mono text-sm"
+              />
+              <button @click="handleSendCommand" class="btn btn-primary rounded-xl px-6">Send</button>
+            </div>
           </div>
         </div>
       </div>
