@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, ActivityType, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, ActivityType, TextChannel, EmbedBuilder } from 'discord.js';
 import { environment } from '~/core/globals';
 
 let client: Client | null = null;
@@ -52,6 +52,25 @@ export const sendDiscordMessage = async (content: string | any) => {
         }
     } catch (error) {
         console.error('[DISCORD] Failed to send message:', error);
+    }
+};
+
+export const sendDiscordEmbed = async (title: string, description: string, color: number = 0x0099ff) => {
+    const config = environment.settings.discord;
+    if (!client || !config || !config.enabled || !config.channelId) return;
+
+    try {
+        const channel = await client.channels.fetch(config.channelId);
+        if (channel && channel.isTextBased()) {
+            const embed = new EmbedBuilder()
+                .setTitle(title)
+                .setDescription(description)
+                .setColor(color)
+                .setTimestamp();
+            await (channel as TextChannel).send({ embeds: [embed] });
+        }
+    } catch (error) {
+        console.error('[DISCORD] Failed to send embed:', error);
     }
 };
 
