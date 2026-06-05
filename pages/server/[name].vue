@@ -328,14 +328,25 @@
             <div class="form-control max-w-md">
               <label class="label"><span class="label-text font-bold">Max Allocated RAM (GB)</span></label>
               <div class="flex items-center gap-6">
-                <input type="range" min="1" max="32" v-model="server.maxMemory" class="range range-primary range-sm flex-1" />
-                <span class="w-16 text-center font-bold bg-primary/10 text-primary py-1 rounded-lg">{{ server.maxMemory }}GB</span>
+                <input type="range" min="1" max="32" v-model="localSettings.maxMemory" class="range range-primary range-sm flex-1" />
+                <span class="w-16 text-center font-bold bg-primary/10 text-primary py-1 rounded-lg">{{ localSettings.maxMemory }}GB</span>
               </div>
             </div>
 
             <div class="form-control max-w-md">
+              <label class="label"><span class="label-text font-bold">Java Runtime</span></label>
+              <select v-model="localSettings.javaVersionName" class="select select-bordered rounded-xl bg-base-100/50 border-base-content/5">
+                <option :value="undefined">System Default (java)</option>
+                <option v-for="java in javaVersions" :key="java.name" :value="java.name">{{ java.name }}</option>
+              </select>
+              <label class="label">
+                <span class="label-text-alt text-base-content/40">Select which Java version to use for this instance.</span>
+              </label>
+            </div>
+
+            <div class="form-control max-w-md">
               <label class="label cursor-pointer justify-start gap-4">
-                <input type="checkbox" v-model="server.publicStatusEnabled" class="toggle toggle-primary" />
+                <input type="checkbox" v-model="localSettings.publicStatusEnabled" class="toggle toggle-primary" />
                 <span class="label-text font-bold">Enable Public Status Page</span>
               </label>
               <label class="label">
@@ -345,13 +356,13 @@
               </label>
             </div>
 
-            <div v-if="server.publicStatusEnabled" class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
+            <div v-if="localSettings.publicStatusEnabled" class="bg-primary/5 border border-primary/10 rounded-2xl p-4 max-w-md">
               <div class="flex items-center justify-between gap-4">
                 <div class="flex flex-col">
                   <span class="text-xs font-bold text-primary uppercase tracking-wider">Public URL</span>
-                  <span class="text-sm font-mono break-all">/status/{{ server.name }}</span>
+                  <span class="text-sm font-mono break-all">/status/{{ server?.name }}</span>
                 </div>
-                <a :href="`/status/${server.name}`" target="_blank" class="btn btn-primary btn-sm rounded-xl">
+                <a :href="`/status/${server?.name}`" target="_blank" class="btn btn-primary btn-sm rounded-xl">
                   <Icon name="material-symbols:open-in-new-rounded" />
                   Open
                 </a>
@@ -404,6 +415,34 @@ const searchResults = ref<any[]>([])
 const searchLoading = ref(false)
 const searchQuery = ref('')
 const installLoading = ref<string | null>(null)
+
+const localSettings = ref({
+  maxMemory: 1,
+  javaVersionName: undefined as string | undefined,
+  publicStatusEnabled: false
+})
+
+// Initialize local settings from server data
+watch(server, (newVal) => {
+  if (newVal && activeTab.value !== 'settings') {
+    localSettings.value = {
+      maxMemory: newVal.maxMemory,
+      javaVersionName: newVal.javaVersionName,
+      publicStatusEnabled: !!newVal.publicStatusEnabled
+    }
+  }
+}, { immediate: true })
+
+// Also sync if we just switched to settings tab to ensure we have latest data
+watch(activeTab, (newTab) => {
+  if (newTab === 'settings' && server.value) {
+    localSettings.value = {
+      maxMemory: server.value.maxMemory,
+      javaVersionName: server.value.javaVersionName,
+      publicStatusEnabled: !!server.value.publicStatusEnabled
+    }
+  }
+})
 
 const handleSearch = async () => {
   if (!searchQuery.value) return
@@ -477,6 +516,13 @@ const fetchJavaVersions = async () => {
 }
 
 const saveBeaconSettings = async () => {
+  if (!server.value) return
+  
+  // Update local server object with our changes
+  server.value.maxMemory = localSettings.value.maxMemory
+  server.value.javaVersionName = localSettings.value.javaVersionName
+  server.value.publicStatusEnabled = localSettings.value.publicStatusEnabled
+
   try {
     await $fetch('/api/setServers', {
       method: 'POST',
@@ -485,8 +531,10 @@ const saveBeaconSettings = async () => {
         Authorization: `Bearer ${useCookie('token').value}`
       }
     })
+    alert('Settings saved successfully!')
   } catch (error) {
     console.error('Failed to save beacon settings:', error);
+    alert('Failed to save settings')
   }
 }
 
