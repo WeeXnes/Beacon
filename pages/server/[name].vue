@@ -22,7 +22,7 @@
           </div>
           <p class="text-base-content/50 font-medium">
             Running {{ server.version }} • {{ server.maxMemory }}GB RAM
-            <span v-if="server.status === 'online'" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
+            <span v-if="server.status === 'online' && server.project !== 'velocity'" class="ml-2 pl-2 border-l border-base-content/20 text-primary">
               <Icon name="material-symbols:group-rounded" class="w-4 h-4 inline mr-1" /> {{ server.onlinePlayers?.length || 0 }}/{{ server.maxPlayers || '--' }}
               <span v-if="server.stats">
                 <Icon name="lucide:cpu" class="w-4 h-4 inline ml-2 mr-1" /> {{ server.stats.cpu }}%
@@ -424,11 +424,11 @@
             <button @click="saveProperties" class="btn btn-primary btn-sm rounded-xl px-6">Save Changes</button>
           </div>
           <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             <template v-for="(val, key) in properties" :key="key">
+             <template v-for="(val, key) in (typeof properties === 'string' ? JSON.parse(properties) : properties)" :key="key">
                 <div v-if="typeof val !== 'object'" class="form-control">
                   <label class="label"><span class="label-text font-bold text-xs uppercase tracking-wider text-base-content/50">{{ key }}</span></label>
-                  <input v-if="typeof val !== 'boolean'" v-model="properties[key]" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5" />
-                  <input v-else type="checkbox" v-model="properties[key]" class="toggle toggle-primary" />
+                  <input v-if="typeof val !== 'boolean'" :value="val" @input="properties[key] = ($event.target as HTMLInputElement).value" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5" />
+                  <input v-else type="checkbox" :checked="val" @change="properties[key] = ($event.target as HTMLInputElement).checked" class="toggle toggle-primary" />
                 </div>
              </template>
           </div>
@@ -765,6 +765,14 @@ const saveProxyMapping = async () => {
 watch(activeTab, (newTab) => {
   if (newTab === 'proxy-mapping') {
     fetchProxyMappings()
+  }
+})
+
+// Watch for status changes to trigger metadata refresh when server comes online
+watch(() => server.value?.status, (newStatus, oldStatus) => {
+  if (oldStatus === 'starting' && newStatus === 'online') {
+    getProperties();
+    fetchServers();
   }
 })
 
