@@ -550,15 +550,17 @@ const installLoading = ref<string | null>(null)
 
 const localSettings = ref({
   maxMemory: 1,
-  javaVersionName: undefined as string | undefined
+  javaVersionName: undefined as string | undefined,
+  discordEnabled: false
 })
 
 // Initialize local settings from server data
 watch(server, (newVal) => {
   if (newVal && activeTab.value !== 'settings') {
     localSettings.value = {
-      maxMemory: newVal.maxMemory,
-      javaVersionName: newVal.javaVersionName
+      maxMemory: Number(newVal.maxMemory),
+      javaVersionName: newVal.javaVersionName,
+      discordEnabled: !!newVal.discordEnabled
     }
   }
 }, { immediate: true, deep: true })
@@ -567,8 +569,9 @@ watch(server, (newVal) => {
 watch(activeTab, (newTab) => {
   if (newTab === 'settings' && server.value) {
     localSettings.value = {
-      maxMemory: server.value.maxMemory,
-      javaVersionName: server.value.javaVersionName
+      maxMemory: Number(server.value.maxMemory),
+      javaVersionName: server.value.javaVersionName,
+      discordEnabled: !!server.value.discordEnabled
     }
   }
 })

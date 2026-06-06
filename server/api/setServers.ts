@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
             onlinePlayers: s.onlinePlayers || [],
             maxPlayers: s.maxPlayers || 20,
             baseDomain: s.baseDomain,
-            stats: s.stats
+            stats: s.stats,
+            discordEnabled: s.discordEnabled
         };
     });
 
