@@ -471,6 +471,18 @@
                 <span class="label-text-alt text-base-content/40">Select which Java version to use for this instance.</span>
               </label>
             </div>
+
+            <div class="divider"></div>
+
+            <div class="form-control max-w-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-bold">Discord Control</span>
+                  <p class="text-xs text-base-content/50">Allow starting and stopping this server via Discord.</p>
+                </div>
+                <input type="checkbox" v-model="localSettings.discordEnabled" class="toggle toggle-primary" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -640,6 +652,7 @@ const saveBeaconSettings = async () => {
   // Update local server object with our changes
   server.value.maxMemory = localSettings.value.maxMemory
   server.value.javaVersionName = localSettings.value.javaVersionName
+  server.value.discordEnabled = localSettings.value.discordEnabled
 
   try {
     await $fetch('/api/setServers', {

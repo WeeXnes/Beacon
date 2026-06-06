@@ -20,6 +20,7 @@ export interface MinecraftServer {
         cpu: number;
         memory: number;
     };
+    discordEnabled?: boolean;
 }
 
 

@@ -93,6 +93,42 @@
         </div>
       </section>
 
+      <!-- Discord Integration -->
+      <section class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+          <h2 class="font-bold flex items-center gap-2">
+            <Icon name="simple-icons:discord" class="text-[#5865F2]" />
+            Discord Bot Integration
+          </h2>
+        </div>
+        <div class="p-8 space-y-6">
+          <div class="alert alert-info rounded-2xl bg-primary/10 border-primary/20 text-primary py-4">
+            <Icon name="lucide:info" />
+            <div class="text-xs font-bold uppercase tracking-wide">
+              Changes to the Discord configuration require a full application restart to take effect.
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Bot Token</span></label>
+              <input v-model="discordConfig.token" type="password" placeholder="MTIz..." class="input input-bordered rounded-xl bg-base-100/50" />
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Client ID</span></label>
+              <input v-model="discordConfig.clientId" type="text" placeholder="123456789..." class="input input-bordered rounded-xl bg-base-100/50" />
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Guild ID (Server ID)</span></label>
+              <input v-model="discordConfig.guildId" type="text" placeholder="987654321..." class="input input-bordered rounded-xl bg-base-100/50" />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button @click="saveDiscordConfig" class="btn btn-primary btn-sm rounded-lg px-6" :loading="savingDiscord">Save Discord Config</button>
+          </div>
+        </div>
+      </section>
+
       <!-- About -->
       <div class="text-center p-8 space-y-4">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
@@ -108,10 +144,17 @@
 </template>
 
 <script setup lang="ts">
-import type { JavaVersion } from '~/types/SettingsJsonFile';
+import type { JavaVersion, DiscordConfig } from '~/types/SettingsJsonFile';
 
 const javaVersions = ref<JavaVersion[]>([]);
+const discordConfig = ref<DiscordConfig>({
+  enabled: false,
+  token: '',
+  clientId: '',
+  guildId: ''
+});
 const saving = ref(false);
+const savingDiscord = ref(false);
 const scanning = ref(false);
 
 const fetchSettings = async () => {
@@ -119,6 +162,9 @@ const fetchSettings = async () => {
   try {
     const javaData = await $fetch<JavaVersion[]>('/api/getJavaVersions', { headers: { Authorization: `Bearer ${token}` } });
     javaVersions.value = javaData || [];
+    
+    const discordData = await $fetch<DiscordConfig>('/api/getDiscordConfig', { headers: { Authorization: `Bearer ${token}` } });
+    discordConfig.value = discordData || discordConfig.value;
   } catch (error) {
     console.error('Failed to fetch settings:', error);
   }
@@ -169,6 +215,23 @@ const saveJavaVersions = async () => {
     console.error('Failed to save Java versions:', error);
   } finally {
     saving.value = false;
+  }
+};
+
+const saveDiscordConfig = async () => {
+  savingDiscord.value = true;
+  try {
+    await $fetch('/api/setDiscordConfig', {
+      method: 'POST',
+      body: { discordConfig: discordConfig.value },
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    });
+  } catch (error) {
+    console.error('Failed to save Discord config:', error);
+  } finally {
+    savingDiscord.value = false;
   }
 };
 

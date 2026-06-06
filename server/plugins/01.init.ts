@@ -1,5 +1,6 @@
 import {environment} from "~/core/globals";
 import {loadJsonFile, saveJsonFile, createPathIfNotExists} from "~/util/jsonLoader";
+import { updateDiscordStatus } from "./02.discord";
 
 export default defineNitroPlugin((nitroApp) => {
     console.log("Loading config...")
@@ -27,4 +28,5 @@ export default defineNitroPlugin((nitroApp) => {
         }
     });
     saveJsonFile();
+    updateDiscordStatus();
 });

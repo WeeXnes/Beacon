@@ -53,7 +53,13 @@ function createEmptySettingsIfNotExists() {
             eula: true,
             servers:[],
             password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje",
-            javaVersions: []
+            javaVersions: [],
+            discordConfig: {
+                enabled: false,
+                token: '',
+                clientId: '',
+                guildId: ''
+            }
         });
         const jsonSettings = JSON.stringify(emptySettings, null, 2);
         fs.writeFileSync(environment.files.settings, jsonSettings);
