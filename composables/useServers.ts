@@ -3,12 +3,13 @@ import type { MinecraftServer, ServerStatus } from "~/types/MinecraftServer";
 export const useServers = () => {
   const servers = useState<MinecraftServer[]>('servers', () => []);
   const loading = useState<boolean>('servers-loading', () => false);
+  const fetched = useState<boolean>('servers-fetched', () => false);
 
   const fetchServers = async () => {
     const token = useCookie('token').value;
     if (!token) return;
 
-    if (servers.value.length === 0) loading.value = true;
+    if (!fetched.value) loading.value = true;
     
     try {
       const data = await $fetch<MinecraftServer[]>('/api/getServers', {
@@ -62,6 +63,7 @@ export const useServers = () => {
       }
     } finally {
       loading.value = false;
+      fetched.value = true;
     }
   };
 
@@ -116,13 +118,22 @@ export const useServers = () => {
     }
   };
 
+  const reset = () => {
+    stopPolling();
+    servers.value = [];
+    loading.value = false;
+    fetched.value = false;
+  };
+
   return {
     servers,
     loading,
+    fetched,
     fetchServers,
     startServer,
     stopServer,
     startPolling,
-    stopPolling
+    stopPolling,
+    reset
   };
 };

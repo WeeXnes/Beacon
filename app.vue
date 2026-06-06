@@ -30,7 +30,7 @@
 <script setup lang="ts">
 const route = useRoute()
 const router = useRouter()
-const { fetchServers, startPolling, stopPolling } = useServers()
+const { fetchServers, startPolling, stopPolling, reset: resetServers } = useServers()
 
 const isLoginPage = computed(() => route.path === '/login')
 const isStatusPage = computed(() => route.path.startsWith('/status/'))
@@ -41,7 +41,7 @@ const routeName = computed(() => {
 })
 
 const logout = () => {
-  stopPolling()
+  resetServers()
   const token = useCookie('token')
   token.value = null
   router.push('/login')
