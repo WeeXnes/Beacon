@@ -564,7 +564,8 @@ const installLoading = ref<string | null>(null)
 const localSettings = ref({
   maxMemory: 1,
   javaVersionName: undefined as string | undefined,
-  discordEnabled: false
+  discordEnabled: false,
+  publicModDownload: false
 })
 
 // Initialize local settings from server data
@@ -573,7 +574,8 @@ watch(server, (newVal) => {
     localSettings.value = {
       maxMemory: Number(newVal.maxMemory),
       javaVersionName: newVal.javaVersionName,
-      discordEnabled: !!newVal.discordEnabled
+      discordEnabled: !!newVal.discordEnabled,
+      publicModDownload: !!newVal.publicModDownload
     }
   }
 }, { immediate: true, deep: true })
@@ -584,7 +586,8 @@ watch(activeTab, (newTab) => {
     localSettings.value = {
       maxMemory: Number(server.value.maxMemory),
       javaVersionName: server.value.javaVersionName,
-      discordEnabled: !!server.value.discordEnabled
+      discordEnabled: !!server.value.discordEnabled,
+      publicModDownload: !!server.value.publicModDownload
     }
   }
 })
@@ -669,6 +672,7 @@ const saveBeaconSettings = async () => {
   server.value.maxMemory = localSettings.value.maxMemory
   server.value.javaVersionName = localSettings.value.javaVersionName
   server.value.discordEnabled = localSettings.value.discordEnabled
+  server.value.publicModDownload = localSettings.value.publicModDownload
 
   try {
     await $fetch('/api/setServers', {
