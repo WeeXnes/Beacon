@@ -134,6 +134,79 @@
         </div>
       </section>
 
+      <!-- External API Access -->
+      <section class="bg-base-200/50 backdrop-blur-md rounded-3xl border border-base-content/5 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5 flex items-center justify-between">
+          <h2 class="font-bold flex items-center gap-2">
+            <Icon name="material-symbols:api-rounded" class="text-primary" />
+            External API Access
+          </h2>
+          <button @click="showTokenModal = true" class="btn btn-primary btn-sm rounded-lg gap-2">
+            <Icon name="material-symbols:add-rounded" />
+            Generate Token
+          </button>
+        </div>
+        <div class="p-8">
+          <div v-if="apiTokens.length === 0" class="text-center py-8 bg-base-100/30 rounded-2xl border border-dashed border-base-content/10">
+            <p class="text-base-content/40 text-sm">No API tokens generated yet. Create one to allow external control.</p>
+          </div>
+          <div v-else class="space-y-4">
+            <div v-for="token in apiTokens" :key="token.token" class="flex items-center gap-4 bg-base-100/50 p-4 rounded-2xl border border-base-content/5 group">
+              <div class="flex-1 min-w-0">
+                <p class="font-bold truncate">{{ token.name }}</p>
+                <p class="text-[10px] uppercase font-bold opacity-30">Created: {{ new Date(token.createdAt).toLocaleDateString() }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="copyToken(token.token)" class="btn btn-ghost btn-sm btn-square text-primary" title="Copy Token">
+                  <Icon name="material-symbols:content-copy-rounded" />
+                </button>
+                <button @click="deleteApiToken(token.token)" class="btn btn-ghost btn-sm btn-square text-error" title="Revoke Token">
+                  <Icon name="material-symbols:delete-outline-rounded" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Token Modal -->
+      <dialog :open="showTokenModal" class="modal modal-bottom sm:modal-middle bg-base-300/60 backdrop-blur-sm">
+        <div class="modal-box bg-base-100 rounded-3xl border border-base-content/5 shadow-2xl">
+          <h3 class="font-bold text-lg mb-4">Generate API Token</h3>
+          <p class="text-sm opacity-50 mb-6">Give your token a name to identify it later (e.g. "Discord Bot", "Mobile App").</p>
+          
+          <div v-if="!generatedToken">
+            <div class="form-control w-full">
+              <label class="label"><span class="label-text font-bold">Token Name</span></label>
+              <input v-model="newTokenName" @keyup.enter="generateToken" type="text" placeholder="External App Name" class="input input-bordered rounded-xl bg-base-200 border-base-content/5" />
+            </div>
+            <div class="modal-action">
+              <button @click="showTokenModal = false; newTokenName = ''" class="btn btn-ghost rounded-xl">Cancel</button>
+              <button @click="generateToken" class="btn btn-primary rounded-xl px-8" :disabled="!newTokenName || savingToken">
+                <span v-if="savingToken" class="loading loading-spinner loading-xs"></span>
+                Generate
+              </button>
+            </div>
+          </div>
+          
+          <div v-else class="space-y-4">
+            <div class="alert alert-warning rounded-2xl text-xs font-bold uppercase tracking-wide">
+              <Icon name="lucide:alert-triangle" />
+              Copy this token now! It will not be shown again.
+            </div>
+            <div class="bg-base-200 p-4 rounded-xl font-mono text-xs break-all border border-base-content/5 flex items-center gap-4">
+              <span class="flex-1">{{ generatedToken }}</span>
+              <button @click="copyToken(generatedToken)" class="btn btn-primary btn-sm btn-square">
+                <Icon name="material-symbols:content-copy-rounded" />
+              </button>
+            </div>
+            <div class="modal-action">
+              <button @click="closeTokenModal" class="btn btn-primary rounded-xl px-12 w-full">I've Saved It</button>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
       <!-- About -->
       <div class="text-center p-8 space-y-4">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
@@ -233,111 +306,6 @@ const closeTokenModal = () => {
   showTokenModal.value = false;
   generatedToken.value = '';
   newTokenName.value = '';
-};
-
-const addJavaVersion = () => {
-  javaVersions.value.push({ name: '', path: '' });
-};
-
-const discoverJava = async () => {
-  scanning.value = true;
-  try {
-    const data = await $fetch<JavaVersion[]>('/api/discoverJavaVersions', {
-      headers: {
-        Authorization: `Bearer ${useCookie('token').value}`
-      }
-    });
-    
-    // Add only if not already in the list
-    data.forEach(discovered => {
-      const exists = javaVersions.value.some(v => v.path === discovered.path);
-      if (!exists) {
-        javaVersions.value.push(discovered);
-      }
-    });
-  } catch (error) {
-    console.error('Failed to discover Java versions:', error);
-  } finally {
-    scanning.value = false;
-  }
-};
-
-const removeJavaVersion = (index: number) => {
-  javaVersions.value.splice(index, 1);
-};
-
-const saveJavaVersions = async () => {
-  saving.value = true;
-  try {
-    await $fetch('/api/setJavaVersions', {
-      method: 'POST',
-      body: { javaVersions: javaVersions.value },
-      headers: {
-        Authorization: `Bearer ${useCookie('token').value}`
-      }
-    });
-  } catch (error) {
-    console.error('Failed to save Java versions:', error);
-  } finally {
-    saving.value = false;
-  }
-};
-
-const saveDiscordConfig = async () => {
-  savingDiscord.value = true;
-  try {
-    await $fetch('/api/setDiscordConfig', {
-      method: 'POST',
-      body: { 
-        discordConfig: discordConfig.value,
-        panelUrl: panelUrl.value
-      },
-      headers: {
-        Authorization: `Bearer ${useCookie('token').value}`
-      }
-    });
-  } catch (error) {
-    console.error('Failed to save Discord config:', error);
-  } finally {
-    savingDiscord.value = false;
-  }
-};
-
-onMounted(() => {
-  fetchSettings();
-});
-</script>
-fig } from '~/types/SettingsJsonFile';
-
-const javaVersions = ref<JavaVersion[]>([]);
-const discordConfig = ref<DiscordConfig>({
-  enabled: false,
-  token: '',
-  clientId: '',
-  guildId: ''
-});
-const panelUrl = ref('');
-const saving = ref(false);
-const savingDiscord = ref(false);
-const scanning = ref(false);
-
-const fetchSettings = async () => {
-  const token = useCookie('token').value;
-  try {
-    const javaData = await $fetch<JavaVersion[]>('/api/getJavaVersions', { headers: { Authorization: `Bearer ${token}` } });
-    javaVersions.value = javaData || [];
-    
-    const discordData = await $fetch<any>('/api/getDiscordConfig', { headers: { Authorization: `Bearer ${token}` } });
-    discordConfig.value = {
-      enabled: discordData.enabled,
-      token: discordData.token,
-      clientId: discordData.clientId,
-      guildId: discordData.guildId
-    };
-    panelUrl.value = discordData.panelUrl || '';
-  } catch (error) {
-    console.error('Failed to fetch settings:', error);
-  }
 };
 
 const addJavaVersion = () => {

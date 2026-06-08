@@ -101,9 +101,3 @@ export function checkEulaFile(server: MinecraftServer){
 
 
 
- fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
-    }
-}
-
-
-
