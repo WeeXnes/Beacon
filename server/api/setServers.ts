@@ -28,6 +28,12 @@ export default defineEventHandler(async (event) => {
             baseDomain: s.baseDomain,
             stats: s.stats,
             discordEnabled: s.discordEnabled,
+            discordStatusConfig: s.discordStatusConfig ? {
+                ...s.discordStatusConfig,
+                showConnectionAddress: s.discordStatusConfig.showConnectionAddress,
+                connectionAddress: s.discordStatusConfig.connectionAddress,
+                lastStatusMessageId: s.discordStatusConfig.lastStatusMessageId
+            } : undefined,
             publicModDownload: s.publicModDownload
         };
     });

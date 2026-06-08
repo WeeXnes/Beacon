@@ -4,6 +4,19 @@ import * as path from 'path';
 
 export type ServerStatus = 'online' | 'offline' | 'starting' | 'stopping';
 
+export interface DiscordStatusConfig {
+    enabled: boolean;
+    channelId: string;
+    embedColor: string;
+    showVersion?: boolean;
+    showDownloadLink?: boolean;
+    showMotd?: boolean;
+    showConnectionAddress?: boolean;
+    connectionAddress?: string;
+    customCaption?: string;
+    lastStatusMessageId?: string;
+}
+
 export interface MinecraftServer {
     name: string;
     version: string;
@@ -21,6 +34,7 @@ export interface MinecraftServer {
         memory: number;
     };
     discordEnabled?: boolean;
+    discordStatusConfig?: DiscordStatusConfig;
     publicModDownload?: boolean;
 }
 

@@ -3,7 +3,7 @@ import {execa} from "execa";
 import { consola } from 'consola';
 import { environment } from '~/core/globals';
 import { saveJsonFile } from "~/util/jsonLoader";
-import { updateDiscordStatus } from '../plugins/02.discord';
+import { updateDiscordStatus, sendServerStatusNotification } from '../plugins/02.discord';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -132,6 +132,7 @@ export async function startMinecraftServer(server_name: string): Promise<{ succe
                     server.status = 'online';
                     consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
                     updateDiscordStatus();
+                    sendServerStatusNotification(server.name, 'start');
                 }
             }
 
@@ -163,6 +164,7 @@ export async function startMinecraftServer(server_name: string): Promise<{ succe
             server.onlinePlayers = [];
             saveJsonFile();
             updateDiscordStatus();
+            sendServerStatusNotification(server.name, 'stop');
         });
 
         return { success: true, message: "Minecraft server started." };
@@ -200,6 +202,7 @@ export async function stopMinecraftServer(server_name: string): Promise<{ succes
             server.status = 'offline';
             saveJsonFile();
             updateDiscordStatus();
+            sendServerStatusNotification(server.name, 'stop');
         }
 
         return { success: true, message: "Stop command sent to Minecraft server." };

@@ -1,9 +1,12 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType, EmbedBuilder, TextChannel } from 'discord.js';
 import { environment } from '~/core/globals';
 import { consola } from 'consola';
 import { startMinecraftServer, stopMinecraftServer } from '../utils/serverControl';
+import { getServerByName, getPropertiesPath } from '~/types/MinecraftServer';
+import * as fs from 'fs/promises';
+import { parse } from 'ini';
 
-let discordClient: Client | null = null;
+export let discordClient: Client | null = null;
 
 export function updateDiscordStatus() {
     if (!discordClient || !discordClient.user) return;
@@ -12,6 +15,69 @@ export function updateDiscordStatus() {
     const statusText = `${runningServers} ${runningServers === 1 ? 'Server' : 'Servers'} running`;
     
     discordClient.user.setActivity(statusText, { type: ActivityType.Watching });
+}
+
+export async function sendServerStatusNotification(serverName: string, type: 'start' | 'stop') {
+    if (!discordClient) return;
+
+    const server = getServerByName(serverName);
+    if (!server || !server.discordStatusConfig || !server.discordStatusConfig.enabled) return;
+
+    const config = server.discordStatusConfig;
+    if (!config.channelId) return;
+
+    try {
+        const channel = await discordClient.channels.fetch(config.channelId);
+        if (!channel || !channel.isTextBased()) {
+            consola.warn(`[DISCORD] Channel ${config.channelId} not found or not text-based.`);
+            return;
+        }
+
+        const embed = new EmbedBuilder()
+            .setTitle(type === 'start' ? `🚀 ${server.name} is starting` : `🛑 ${server.name} has stopped`)
+            .setColor((config.embedColor as any) || (type === 'start' ? '#2ecc71' : '#e74c3c'))
+            .setTimestamp();
+
+        const fields = [];
+
+        if (config.showVersion) {
+            fields.push({ name: 'Version', value: `\`${server.version}\``, inline: true });
+        }
+
+        if (config.showMotd && type === 'start') {
+            try {
+                const propsPath = getPropertiesPath(server);
+                const propsData = await fs.readFile(propsPath, 'utf-8');
+                const props = parse(propsData);
+                const motd = props.motd || 'No MOTD set';
+                // Strip Minecraft color codes
+                const cleanMotd = motd.replace(/§[0-9a-fk-or]/gi, '');
+                embed.addFields({ name: 'MOTD', value: cleanMotd });
+            } catch (e) {
+                // Ignore if props not readable
+            }
+        }
+
+        if (config.showDownloadLink && server.publicModDownload) {
+             // We don't have a reliable way to get the external URL here easily without config
+             // For now we'll assume a relative path or just mention it
+             fields.push({ name: 'Mods', value: `[Download Mods](https://your-panel-url.com/download/${server.name})`, inline: true });
+             // TODO: Add global setting for panel URL
+        }
+
+        if (fields.length > 0) {
+            embed.addFields(fields);
+        }
+
+        if (config.customCaption) {
+            embed.setDescription(config.customCaption);
+        }
+
+        await (channel as TextChannel).send({ embeds: [embed] });
+        consola.success(`[DISCORD] Sent ${type} notification for ${serverName}`);
+    } catch (error) {
+        consola.error(`[DISCORD] Failed to send status notification for ${serverName}:`, error);
+    }
 }
 
 export default defineNitroPlugin(async (nitroApp) => {

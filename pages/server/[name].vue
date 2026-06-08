@@ -496,6 +496,49 @@
                 <input type="checkbox" v-model="localSettings.publicModDownload" class="toggle toggle-primary" />
               </div>
             </div>
+
+            <div class="divider"></div>
+
+            <div class="form-control max-w-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-bold">Discord Status Notifications</span>
+                  <p class="text-xs text-base-content/50">Send a message to Discord when the server starts or stops.</p>
+                </div>
+                <input type="checkbox" v-model="localSettings.discordStatusConfig.enabled" class="toggle toggle-primary" />
+              </div>
+            </div>
+
+            <div v-if="localSettings.discordStatusConfig.enabled" class="space-y-4 max-w-2xl bg-base-100/30 p-6 rounded-3xl border border-base-content/5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-[10px] uppercase tracking-widest opacity-50">Channel ID</span></label>
+                    <input v-model="localSettings.discordStatusConfig.channelId" type="text" placeholder="123456789..." class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5 text-sm font-mono" />
+                  </div>
+                  <div class="form-control">
+                    <label class="label"><span class="label-text font-bold text-[10px] uppercase tracking-widest opacity-50">Embed Color (Hex)</span></label>
+                    <input v-model="localSettings.discordStatusConfig.embedColor" type="text" placeholder="#2ecc71" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5 text-sm font-mono" />
+                  </div>
+                </div>
+                <div class="form-control">
+                  <label class="label"><span class="label-text font-bold text-[10px] uppercase tracking-widest opacity-50">Custom Caption</span></label>
+                  <textarea v-model="localSettings.discordStatusConfig.customCaption" class="textarea textarea-bordered rounded-xl bg-base-100/50 border-base-content/5 text-sm min-h-[80px]" placeholder="Optional text above fields..."></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2">
+                    <label class="label cursor-pointer justify-start gap-3 p-2 hover:bg-base-content/5 rounded-xl transition-colors">
+                      <input type="checkbox" v-model="localSettings.discordStatusConfig.showVersion" class="checkbox checkbox-primary checkbox-xs rounded-md" />
+                      <span class="label-text text-[10px] font-bold opacity-60 uppercase">Show Version</span>
+                    </label>
+                    <label class="label cursor-pointer justify-start gap-3 p-2 hover:bg-base-content/5 rounded-xl transition-colors">
+                      <input type="checkbox" v-model="localSettings.discordStatusConfig.showMotd" class="checkbox checkbox-primary checkbox-xs rounded-md" />
+                      <span class="label-text text-[10px] font-bold opacity-60 uppercase">Show MOTD</span>
+                    </label>
+                    <label class="label cursor-pointer justify-start gap-3 p-2 hover:bg-base-content/5 rounded-xl transition-colors">
+                      <input type="checkbox" v-model="localSettings.discordStatusConfig.showDownloadLink" class="checkbox checkbox-primary checkbox-xs rounded-md" />
+                      <span class="label-text text-[10px] font-bold opacity-60 uppercase">Show Mod Link</span>
+                    </label>
+                </div>
+            </div>
           </div>
         </div>
       </div>
@@ -565,7 +608,16 @@ const localSettings = ref({
   maxMemory: 1,
   javaVersionName: undefined as string | undefined,
   discordEnabled: false,
-  publicModDownload: false
+  publicModDownload: false,
+  discordStatusConfig: {
+    enabled: false,
+    channelId: '',
+    embedColor: '#2ecc71',
+    showVersion: true,
+    showDownloadLink: false,
+    showMotd: true,
+    customCaption: ''
+  }
 })
 
 // Initialize local settings from server data
@@ -575,7 +627,16 @@ watch(server, (newVal) => {
       maxMemory: Number(newVal.maxMemory),
       javaVersionName: newVal.javaVersionName,
       discordEnabled: !!newVal.discordEnabled,
-      publicModDownload: !!newVal.publicModDownload
+      publicModDownload: !!newVal.publicModDownload,
+      discordStatusConfig: newVal.discordStatusConfig ? { ...newVal.discordStatusConfig } : {
+        enabled: false,
+        channelId: '',
+        embedColor: '#2ecc71',
+        showVersion: true,
+        showDownloadLink: false,
+        showMotd: true,
+        customCaption: ''
+      }
     }
   }
 }, { immediate: true, deep: true })
@@ -587,7 +648,16 @@ watch(activeTab, (newTab) => {
       maxMemory: Number(server.value.maxMemory),
       javaVersionName: server.value.javaVersionName,
       discordEnabled: !!server.value.discordEnabled,
-      publicModDownload: !!server.value.publicModDownload
+      publicModDownload: !!server.value.publicModDownload,
+      discordStatusConfig: server.value.discordStatusConfig ? { ...server.value.discordStatusConfig } : {
+        enabled: false,
+        channelId: '',
+        embedColor: '#2ecc71',
+        showVersion: true,
+        showDownloadLink: false,
+        showMotd: true,
+        customCaption: ''
+      }
     }
   }
 })
@@ -673,6 +743,7 @@ const saveBeaconSettings = async () => {
   server.value.javaVersionName = localSettings.value.javaVersionName
   server.value.discordEnabled = localSettings.value.discordEnabled
   server.value.publicModDownload = localSettings.value.publicModDownload
+  server.value.discordStatusConfig = localSettings.value.discordStatusConfig
 
   try {
     await $fetch('/api/setServers', {
