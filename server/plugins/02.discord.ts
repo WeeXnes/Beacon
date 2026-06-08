@@ -1,8 +1,9 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType, EmbedBuilder, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType, EmbedBuilder, TextChannel, Message } from 'discord.js';
 import { environment } from '~/core/globals';
 import { consola } from 'consola';
 import { startMinecraftServer, stopMinecraftServer } from '../utils/serverControl';
 import { getServerByName, getPropertiesPath } from '~/types/MinecraftServer';
+import { saveJsonFile } from '~/util/jsonLoader';
 import * as fs from 'fs/promises';
 import { parse } from 'ini';
 
@@ -17,7 +18,7 @@ export function updateDiscordStatus() {
     discordClient.user.setActivity(statusText, { type: ActivityType.Watching });
 }
 
-export async function sendServerStatusNotification(serverName: string, type: 'start' | 'stop') {
+export async function sendServerStatusNotification(serverName: string, type: 'starting' | 'online' | 'stop') {
     if (!discordClient) return;
 
     const server = getServerByName(serverName);
@@ -33,9 +34,23 @@ export async function sendServerStatusNotification(serverName: string, type: 'st
             return;
         }
 
+        let title = '';
+        let color = config.embedColor || '#2ecc71';
+
+        if (type === 'starting') {
+            title = `⏳ ${server.name} is starting...`;
+            color = '#f1c40f'; // Yellow
+        } else if (type === 'online') {
+            title = `✅ ${server.name} is online`;
+            color = config.embedColor || '#2ecc71'; // Green
+        } else {
+            title = `🛑 ${server.name} has stopped`;
+            color = '#e74c3c'; // Red
+        }
+
         const embed = new EmbedBuilder()
-            .setTitle(type === 'start' ? `🚀 ${server.name} is starting` : `🛑 ${server.name} has stopped`)
-            .setColor((config.embedColor as any) || (type === 'start' ? '#2ecc71' : '#e74c3c'))
+            .setTitle(title)
+            .setColor(color as any)
             .setTimestamp();
 
         const fields = [];
@@ -44,25 +59,30 @@ export async function sendServerStatusNotification(serverName: string, type: 'st
             fields.push({ name: 'Version', value: `\`${server.version}\``, inline: true });
         }
 
-        if (config.showMotd && type === 'start') {
+        if (config.showConnectionAddress && config.connectionAddress) {
+            fields.push({ name: 'Connection', value: `\`${config.connectionAddress}\``, inline: true });
+        }
+
+        if (config.showMotd && (type === 'starting' || type === 'online')) {
             try {
                 const propsPath = getPropertiesPath(server);
                 const propsData = await fs.readFile(propsPath, 'utf-8');
                 const props = parse(propsData);
                 const motd = props.motd || 'No MOTD set';
-                // Strip Minecraft color codes
                 const cleanMotd = motd.replace(/§[0-9a-fk-or]/gi, '');
                 embed.addFields({ name: 'MOTD', value: cleanMotd });
-            } catch (e) {
-                // Ignore if props not readable
-            }
+            } catch (e) { /* ignore */ }
         }
 
         if (config.showDownloadLink && server.publicModDownload) {
-             // We don't have a reliable way to get the external URL here easily without config
-             // For now we'll assume a relative path or just mention it
-             fields.push({ name: 'Mods', value: `[Download Mods](https://your-panel-url.com/download/${server.name})`, inline: true });
-             // TODO: Add global setting for panel URL
+             const baseUrl = environment.settings.panelUrl;
+             if (baseUrl && baseUrl.trim() !== '') {
+                 // Ensure no spaces in URL for markdown
+                 const downloadUrl = `${baseUrl.replace(/\/$/, '')}/download/${encodeURIComponent(server.name)}`;
+                 fields.push({ name: 'Mods', value: `[Click to Download](${downloadUrl})`, inline: true });
+             } else {
+                 fields.push({ name: 'Mods', value: '*Panel URL not configured*', inline: true });
+             }
         }
 
         if (fields.length > 0) {
@@ -73,7 +93,29 @@ export async function sendServerStatusNotification(serverName: string, type: 'st
             embed.setDescription(config.customCaption);
         }
 
-        await (channel as TextChannel).send({ embeds: [embed] });
+        if (type === 'online' && config.lastStatusMessageId) {
+            try {
+                const message = await (channel as TextChannel).messages.fetch(config.lastStatusMessageId);
+                if (message) {
+                    await message.edit({ embeds: [embed] });
+                    consola.success(`[DISCORD] Updated starting message to online for ${serverName}`);
+                    return;
+                }
+            } catch (e) {
+                consola.warn(`[DISCORD] Could not find previous message ${config.lastStatusMessageId} to edit, sending new one.`);
+            }
+        }
+
+        const sentMessage = await (channel as TextChannel).send({ embeds: [embed] });
+        
+        if (type === 'starting') {
+            config.lastStatusMessageId = sentMessage.id;
+            saveJsonFile();
+        } else {
+            config.lastStatusMessageId = undefined;
+            saveJsonFile();
+        }
+
         consola.success(`[DISCORD] Sent ${type} notification for ${serverName}`);
     } catch (error) {
         consola.error(`[DISCORD] Failed to send status notification for ${serverName}:`, error);

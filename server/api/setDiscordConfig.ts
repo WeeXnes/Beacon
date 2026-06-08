@@ -4,18 +4,27 @@ import { consola } from 'consola';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
-    const { discordConfig } = body;
+    
+    // The UI sends { discordConfig: ..., panelUrl: ... }
+    const { discordConfig, panelUrl } = body;
 
     try {
-        environment.settings.discordConfig = {
-            ...discordConfig,
-            enabled: true
-        };
+        if (discordConfig) {
+            environment.settings.discordConfig = {
+                ...discordConfig,
+                enabled: true
+            };
+        }
+        
+        if (panelUrl !== undefined) {
+            environment.settings.panelUrl = panelUrl;
+        }
+
         saveJsonFile();
-        consola.success(`[CONFIG] ✅ Discord configuration updated`);
+        consola.success(`[CONFIG] ✅ Discord and Panel configuration updated`);
         return { status: 'success' };
     } catch (error: any) {
-        consola.error(`[CONFIG] 🔥 Error updating Discord configuration:`, error.message);
+        consola.error(`[CONFIG] 🔥 Error updating configuration:`, error.message);
         return { status: 'error', error: error.message };
     }
 });

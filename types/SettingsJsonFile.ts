@@ -18,4 +18,5 @@ export interface SettingsJsonFile {
     password_hash: string;
     javaVersions: JavaVersion[];
     discordConfig?: DiscordConfig;
+    panelUrl?: string;
 }

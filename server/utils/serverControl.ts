@@ -83,6 +83,7 @@ export async function startMinecraftServer(server_name: string): Promise<{ succe
         server.pid = subprocess.pid;
         server.status = 'starting';
         server.onlinePlayers = [];
+        sendServerStatusNotification(server.name, 'starting');
         
         // Save PID to persistent storage
         saveJsonFile();
@@ -132,7 +133,7 @@ export async function startMinecraftServer(server_name: string): Promise<{ succe
                     server.status = 'online';
                     consola.success(`[SERVER] ✅ Server "${server.name}" is now online`);
                     updateDiscordStatus();
-                    sendServerStatusNotification(server.name, 'start');
+                    sendServerStatusNotification(server.name, 'online');
                 }
             }
 

@@ -122,6 +122,11 @@
               <label class="label"><span class="label-text font-bold">Guild ID (Server ID)</span></label>
               <input v-model="discordConfig.guildId" type="text" placeholder="987654321..." class="input input-bordered rounded-xl bg-base-100/50" />
             </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text font-bold">Panel Base URL</span></label>
+              <input v-model="panelUrl" type="text" placeholder="https://beacon.example.com" class="input input-bordered rounded-xl bg-base-100/50" />
+              <label class="label"><span class="label-text-alt opacity-50">Used for mod downloads and external links.</span></label>
+            </div>
           </div>
           <div class="flex justify-end">
             <button @click="saveDiscordConfig" class="btn btn-primary btn-sm rounded-lg px-6" :loading="savingDiscord">Save Discord Config</button>
@@ -153,6 +158,7 @@ const discordConfig = ref<DiscordConfig>({
   clientId: '',
   guildId: ''
 });
+const panelUrl = ref('');
 const saving = ref(false);
 const savingDiscord = ref(false);
 const scanning = ref(false);
@@ -163,8 +169,14 @@ const fetchSettings = async () => {
     const javaData = await $fetch<JavaVersion[]>('/api/getJavaVersions', { headers: { Authorization: `Bearer ${token}` } });
     javaVersions.value = javaData || [];
     
-    const discordData = await $fetch<DiscordConfig>('/api/getDiscordConfig', { headers: { Authorization: `Bearer ${token}` } });
-    discordConfig.value = discordData || discordConfig.value;
+    const discordData = await $fetch<any>('/api/getDiscordConfig', { headers: { Authorization: `Bearer ${token}` } });
+    discordConfig.value = {
+      enabled: discordData.enabled,
+      token: discordData.token,
+      clientId: discordData.clientId,
+      guildId: discordData.guildId
+    };
+    panelUrl.value = discordData.panelUrl || '';
   } catch (error) {
     console.error('Failed to fetch settings:', error);
   }
@@ -223,7 +235,10 @@ const saveDiscordConfig = async () => {
   try {
     await $fetch('/api/setDiscordConfig', {
       method: 'POST',
-      body: { discordConfig: discordConfig.value },
+      body: { 
+        discordConfig: discordConfig.value,
+        panelUrl: panelUrl.value
+      },
       headers: {
         Authorization: `Bearer ${useCookie('token').value}`
       }

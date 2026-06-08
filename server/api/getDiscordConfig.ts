@@ -9,10 +9,13 @@ export default defineEventHandler(() => {
             guildId: ''
         };
     }
-    return environment.settings.discordConfig || {
-        enabled: false,
-        token: '',
-        clientId: '',
-        guildId: ''
+    return {
+        ...(environment.settings.discordConfig || {
+            enabled: false,
+            token: '',
+            clientId: '',
+            guildId: ''
+        }),
+        panelUrl: environment.settings.panelUrl || ''
     };
 });

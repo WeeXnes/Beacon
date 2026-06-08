@@ -537,6 +537,14 @@
                       <input type="checkbox" v-model="localSettings.discordStatusConfig.showDownloadLink" class="checkbox checkbox-primary checkbox-xs rounded-md" />
                       <span class="label-text text-[10px] font-bold opacity-60 uppercase">Show Mod Link</span>
                     </label>
+                    <label class="label cursor-pointer justify-start gap-3 p-2 hover:bg-base-content/5 rounded-xl transition-colors">
+                      <input type="checkbox" v-model="localSettings.discordStatusConfig.showConnectionAddress" class="checkbox checkbox-primary checkbox-xs rounded-md" />
+                      <span class="label-text text-[10px] font-bold opacity-60 uppercase">Show Connection</span>
+                    </label>
+                </div>
+                <div v-if="localSettings.discordStatusConfig.showConnectionAddress" class="form-control">
+                  <label class="label"><span class="label-text font-bold text-[10px] uppercase tracking-widest opacity-50">Connection Address</span></label>
+                  <input v-model="localSettings.discordStatusConfig.connectionAddress" type="text" placeholder="play.example.com" class="input input-bordered rounded-xl bg-base-100/50 border-base-content/5 text-sm font-mono" />
                 </div>
             </div>
           </div>
@@ -616,7 +624,10 @@ const localSettings = ref({
     showVersion: true,
     showDownloadLink: false,
     showMotd: true,
-    customCaption: ''
+    showConnectionAddress: false,
+    connectionAddress: '',
+    customCaption: '',
+    lastStatusMessageId: undefined
   }
 })
 
@@ -656,7 +667,10 @@ watch(activeTab, (newTab) => {
         showVersion: true,
         showDownloadLink: false,
         showMotd: true,
-        customCaption: ''
+        showConnectionAddress: false,
+        connectionAddress: '',
+        customCaption: '',
+        lastStatusMessageId: undefined
       }
     }
   }
