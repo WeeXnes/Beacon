@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
   
   // Note: /api/_nuxt_icon is used by the @nuxt/icon module and should be allowed
   const isIcon = path.startsWith('/api/_nuxt_icon');
+  const isExternal = path.startsWith('/api/external/');
 
   if (isApi && !isLogin && !isIcon && !isDownload) {
     const authHeader = getHeader(event, 'authorization');
@@ -27,6 +28,18 @@ export default defineEventHandler(async (event) => {
     if (!token) {
       consola.warn(`[AUTH] ⚠️ Malformed token: ${method} ${path}`);
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
+    }
+
+    if (isExternal) {
+      const validTokens = environment.settings.apiTokens || [];
+      const isValid = validTokens.some(t => t.token === token);
+      
+      if (!isValid) {
+        consola.error(`[AUTH] ❌ Invalid External API Token: ${method} ${path}`);
+        throw createError({ statusCode: 401, statusMessage: 'Invalid API Token' });
+      }
+      consola.success(`[AUTH] 🌐 External Access Authorized: ${method} ${path}`);
+      return;
     }
 
     try {

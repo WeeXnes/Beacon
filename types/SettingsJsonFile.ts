@@ -12,6 +12,12 @@ export interface DiscordConfig {
     guildId: string;
 }
 
+export interface ApiToken {
+    name: string;
+    token: string;
+    createdAt: string;
+}
+
 export interface SettingsJsonFile {
     eula: boolean;
     servers: MinecraftServer[];
@@ -19,4 +25,5 @@ export interface SettingsJsonFile {
     javaVersions: JavaVersion[];
     discordConfig?: DiscordConfig;
     panelUrl?: string;
+    apiTokens?: ApiToken[];
 }

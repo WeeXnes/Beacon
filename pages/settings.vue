@@ -149,7 +149,165 @@
 </template>
 
 <script setup lang="ts">
-import type { JavaVersion, DiscordConfig } from '~/types/SettingsJsonFile';
+import type { JavaVersion, DiscordConfig, ApiToken } from '~/types/SettingsJsonFile';
+
+const javaVersions = ref<JavaVersion[]>([]);
+const discordConfig = ref<DiscordConfig>({
+  enabled: false,
+  token: '',
+  clientId: '',
+  guildId: ''
+});
+const panelUrl = ref('');
+const apiTokens = ref<ApiToken[]>([]);
+
+const showTokenModal = ref(false);
+const newTokenName = ref('');
+const generatedToken = ref('');
+const savingToken = ref(false);
+
+const saving = ref(false);
+const savingDiscord = ref(false);
+const scanning = ref(false);
+
+const fetchSettings = async () => {
+  const token = useCookie('token').value;
+  try {
+    const javaData = await $fetch<JavaVersion[]>('/api/getJavaVersions', { headers: { Authorization: `Bearer ${token}` } });
+    javaVersions.value = javaData || [];
+    
+    const discordData = await $fetch<any>('/api/getDiscordConfig', { headers: { Authorization: `Bearer ${token}` } });
+    discordConfig.value = {
+      enabled: discordData.enabled,
+      token: discordData.token,
+      clientId: discordData.clientId,
+      guildId: discordData.guildId
+    };
+    panelUrl.value = discordData.panelUrl || '';
+
+    const tokenData = await $fetch<ApiToken[]>('/api/getApiTokens', { headers: { Authorization: `Bearer ${token}` } });
+    apiTokens.value = tokenData || [];
+  } catch (error) {
+    console.error('Failed to fetch settings:', error);
+  }
+};
+
+const generateToken = async () => {
+  if (!newTokenName.value) return;
+  savingToken.value = true;
+  try {
+    const data = await $fetch<ApiToken>('/api/addApiToken', {
+      method: 'POST',
+      body: { name: newTokenName.value },
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    });
+    generatedToken.value = data.token;
+    await fetchSettings();
+  } catch (error) {
+    console.error('Failed to generate token:', error);
+  } finally {
+    savingToken.value = false;
+  }
+};
+
+const deleteApiToken = async (token: string) => {
+  if (!confirm('Are you sure you want to revoke this token? External apps using it will lose access.')) return;
+  try {
+    await $fetch('/api/deleteApiToken', {
+      method: 'POST',
+      body: { token },
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    });
+    await fetchSettings();
+  } catch (error) {
+    console.error('Failed to delete token:', error);
+  }
+};
+
+const copyToken = (text: string) => {
+  navigator.clipboard.writeText(text);
+  alert('Token copied to clipboard!');
+};
+
+const closeTokenModal = () => {
+  showTokenModal.value = false;
+  generatedToken.value = '';
+  newTokenName.value = '';
+};
+
+const addJavaVersion = () => {
+  javaVersions.value.push({ name: '', path: '' });
+};
+
+const discoverJava = async () => {
+  scanning.value = true;
+  try {
+    const data = await $fetch<JavaVersion[]>('/api/discoverJavaVersions', {
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    });
+    
+    // Add only if not already in the list
+    data.forEach(discovered => {
+      const exists = javaVersions.value.some(v => v.path === discovered.path);
+      if (!exists) {
+        javaVersions.value.push(discovered);
+      }
+    });
+  } catch (error) {
+    console.error('Failed to discover Java versions:', error);
+  } finally {
+    scanning.value = false;
+  }
+};
+
+const removeJavaVersion = (index: number) => {
+  javaVersions.value.splice(index, 1);
+};
+
+const saveJavaVersions = async () => {
+  saving.value = true;
+  try {
+    await $fetch('/api/setJavaVersions', {
+      method: 'POST',
+      body: { javaVersions: javaVersions.value },
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    });
+  } catch (error) {
+    console.error('Failed to save Java versions:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const saveDiscordConfig = async () => {
+  savingDiscord.value = true;
+  try {
+    await $fetch('/api/setDiscordConfig', {
+      method: 'POST',
+      body: { 
+        discordConfig: discordConfig.value,
+        panelUrl: panelUrl.value
+      },
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    });
+  } catch (error) {
+    console.error('Failed to save Discord config:', error);
+  } finally {
+    savingDiscord.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchSettings();
+});
+</script>
+fig } from '~/types/SettingsJsonFile';
 
 const javaVersions = ref<JavaVersion[]>([]);
 const discordConfig = ref<DiscordConfig>({

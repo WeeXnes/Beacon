@@ -59,7 +59,8 @@ function createEmptySettingsIfNotExists() {
                 token: '',
                 clientId: '',
                 guildId: ''
-            }
+            },
+            apiTokens: []
         });
         const jsonSettings = JSON.stringify(emptySettings, null, 2);
         fs.writeFileSync(environment.files.settings, jsonSettings);
@@ -95,6 +96,12 @@ export function checkEulaFile(server: MinecraftServer){
     } catch (error) {
         console.log(`Setting eula for ${server.name} to ${environment.settings.eula}`)
         fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
+    }
+}
+
+
+
+ fs.writeFileSync(destinationPathEula, 'eula=' + environment.settings.eula);
     }
 }
 
