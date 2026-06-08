@@ -21,6 +21,7 @@ export interface MinecraftServer {
         memory: number;
     };
     discordEnabled?: boolean;
+    publicModDownload?: boolean;
 }
 
 

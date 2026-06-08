@@ -351,7 +351,7 @@
             <button 
               @click="createBackup" 
               class="btn btn-primary btn-sm rounded-xl px-6 gap-2"
-              :disabled="loadingBackups || server.status !== 'offline'"
+              :disabled="loadingBackups"
             >
               <span v-if="loadingBackups" class="loading loading-spinner loading-xs"></span>
               <Icon v-else name="material-symbols:add-rounded" />
@@ -481,6 +481,19 @@
                   <p class="text-xs text-base-content/50">Allow starting and stopping this server via Discord.</p>
                 </div>
                 <input type="checkbox" v-model="localSettings.discordEnabled" class="toggle toggle-primary" />
+              </div>
+            </div>
+
+            <div v-if="server?.project === 'fabric' || server?.project === 'forge'" class="form-control max-w-md">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="font-bold">Public Mod Download</span>
+                  <p class="text-xs text-base-content/50">Allow users to download a ZIP of the mods folder.</p>
+                  <p v-if="localSettings.publicModDownload" class="text-[10px] font-mono opacity-50 mt-1">
+                    URL: /api/downloadMods?name={{ serverName }}
+                  </p>
+                </div>
+                <input type="checkbox" v-model="localSettings.publicModDownload" class="toggle toggle-primary" />
               </div>
             </div>
           </div>

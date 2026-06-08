@@ -14,10 +14,6 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 404, statusMessage: "Server not found" });
     }
 
-    if (server.status !== 'offline') {
-        throw createError({ statusCode: 400, statusMessage: "Server must be offline to create a backup" });
-    }
-
     const backupDir = path.join(environment.paths.backups, server.name);
     createPathIfNotExists(backupDir);
 
