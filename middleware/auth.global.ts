@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const token = useCookie('token')
 
     // Allow public routes
-    if (to.path === '/login' || to.path.startsWith('/status/')) return
+    if (to.path === '/login' || to.path.startsWith('/status/') || to.path.startsWith('/download/')) return
 
     // If no token exists, force login
     if (!token.value) {

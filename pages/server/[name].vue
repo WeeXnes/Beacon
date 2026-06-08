@@ -490,7 +490,7 @@
                   <span class="font-bold">Public Mod Download</span>
                   <p class="text-xs text-base-content/50">Allow users to download a ZIP of the mods folder.</p>
                   <p v-if="localSettings.publicModDownload" class="text-[10px] font-mono opacity-50 mt-1">
-                    URL: /api/downloadMods?name={{ serverName }}
+                    URL: /download/{{ serverName }}
                   </p>
                 </div>
                 <input type="checkbox" v-model="localSettings.publicModDownload" class="toggle toggle-primary" />

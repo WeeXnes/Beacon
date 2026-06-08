@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   // Define strict API protection
   const isApi = path.startsWith('/api/');
   const isLogin = path === '/api/login';
-  const isDownload = pathWithoutQuery === '/api/downloadMods';
+  const isDownload = pathWithoutQuery === '/api/downloadMods' || pathWithoutQuery === '/api/getModList';
   
   // Note: /api/_nuxt_icon is used by the @nuxt/icon module and should be allowed
   const isIcon = path.startsWith('/api/_nuxt_icon');
