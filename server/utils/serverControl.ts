@@ -4,6 +4,8 @@ import { consola } from 'consola';
 import { environment } from '~/core/globals';
 import { saveJsonFile } from "~/util/jsonLoader";
 import { updateDiscordStatus } from '../plugins/02.discord';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function startMinecraftServer(server_name: string): Promise<{ success: boolean; message: string }> {
     const server = getServerByName(server_name);
@@ -33,11 +35,49 @@ export async function startMinecraftServer(server_name: string): Promise<{ succe
 
         consola.start(`[SERVER] 🚀 Starting server "${server.name}" using ${javaBinary} (${xmsArg}, ${xmxArg})`);
 
-        const subprocess = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
-            cwd: getServerDirectory(server),
-            stdin: 'pipe',
-            buffer: false,
-        });
+        let subprocess;
+        const serverDir = getServerDirectory(server);
+
+        // Modern Forge Support (1.17+)
+        let isModernForge = false;
+        if (server.project === 'forge') {
+            const forgeLibDir = path.join(serverDir, 'libraries/net/minecraftforge/forge');
+            if (fs.existsSync(forgeLibDir)) {
+                const versions = fs.readdirSync(forgeLibDir);
+                if (versions.length > 0) {
+                    const argsFile = process.platform === 'win32' ? 'win_args.txt' : 'unix_args.txt';
+                    const argsFilePath = path.join(forgeLibDir, versions[0], argsFile);
+                    
+                    if (fs.existsSync(argsFilePath)) {
+                        isModernForge = true;
+                        const launchArgs = [xmsArg, xmxArg];
+                        
+                        if (fs.existsSync(path.join(serverDir, 'user_jvm_args.txt'))) {
+                            launchArgs.push('@user_jvm_args.txt');
+                        }
+                        
+                        launchArgs.push(`@${path.relative(serverDir, argsFilePath)}`);
+                        launchArgs.push('nogui');
+
+                        subprocess = execa(javaBinary, launchArgs, {
+                            cwd: serverDir,
+                            stdin: 'pipe',
+                            buffer: false,
+                        });
+                    }
+                }
+            }
+        }
+
+        if (!isModernForge) {
+            subprocess = execa(javaBinary, [xmsArg, xmxArg, '-jar', getJarPath(server), 'nogui'], {
+                cwd: serverDir,
+                stdin: 'pipe',
+                buffer: false,
+            });
+        }
+
+        if (!subprocess) throw new Error("Failed to initialize subprocess");
 
         server.process = subprocess;
         server.pid = subprocess.pid;

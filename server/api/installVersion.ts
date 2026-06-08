@@ -118,17 +118,22 @@ export default defineEventHandler(async (event) => {
                 
                 const files = fs.readdirSync(serverDir);
                 
-                // Modern Forge (1.17+) often generates 'run.bat/sh'.
-                // If no jar found, look for the 'forge-*-server.jar' or 'forge-*-universal.jar'
-                // The installer creates a 'forge-*.jar' in some versions.
+                // Try to find the server jar
                 const forgeJar = files.find(f => f.startsWith('forge-') && f.endsWith('.jar') && !f.includes('installer'));
                 
                 if (forgeJar) {
                     jarName = forgeJar;
                 } else {
-                     // Check for a specific pattern for 1.20.1+
-                     const serverJar = files.find(f => f.startsWith('forge-') && f.endsWith('.jar'));
-                     jarName = serverJar || downloadName.replace('-installer', '');
+                    // Modern Forge (1.17+) might not have a jar in the root
+                    // Check if libraries/net/minecraftforge/forge exists
+                    const forgeLibDir = path.join(serverDir, 'libraries/net/minecraftforge/forge');
+                    if (fs.existsSync(forgeLibDir)) {
+                        jarName = 'MODERN_FORGE'; // Placeholder, serverControl will handle it
+                    } else {
+                        // Fallback
+                        const serverJar = files.find(f => f.startsWith('forge-') && f.endsWith('.jar'));
+                        jarName = serverJar || downloadName.replace('-installer', '');
+                    }
                 }
                 
                 // Cleanup installer
