@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-base-300 flex items-center justify-center p-4">
+  <div class="min-h-screen flex items-center justify-center p-4 py-12 bg-base-300/50">
     <div class="max-w-xl w-full">
       <!-- Loading State -->
       <div v-if="loading" class="bg-base-100/50 backdrop-blur-xl p-12 rounded-[2.5rem] shadow-2xl border border-base-content/5 text-center">

@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-screen flex bg-base-100 font-sans text-base-content selection:bg-primary/30" data-theme="onedev">
-    <AppSidebar v-if="!isLoginPage && !isStatusPage" />
+    <AppSidebar v-if="!isPublicPage" />
     
     <div class="flex-1 flex flex-col min-w-0">
-      <header v-if="!isLoginPage && !isStatusPage" class="h-16 border-b border-base-content/5 flex items-center justify-between px-8 bg-base-100/50 backdrop-blur-md sticky top-0 z-40">
+      <header v-if="!isPublicPage" class="h-16 border-b border-base-content/5 flex items-center justify-between px-8 bg-base-100/50 backdrop-blur-md sticky top-0 z-40">
         <div class="flex items-center gap-4">
           <h2 class="text-lg font-semibold capitalize">{{ routeName }}</h2>
         </div>
@@ -34,6 +34,10 @@ const { fetchServers, startPolling, stopPolling, reset: resetServers } = useServ
 
 const isLoginPage = computed(() => route.path === '/login')
 const isStatusPage = computed(() => route.path.startsWith('/status/'))
+const isDownloadPage = computed(() => route.path.startsWith('/download/'))
+
+const isPublicPage = computed(() => isLoginPage.value || isStatusPage.value || isDownloadPage.value)
+
 const routeName = computed(() => {
   if (route.path === '/') return 'Dashboard'
   if (route.path.startsWith('/server/')) return 'Server Details'
