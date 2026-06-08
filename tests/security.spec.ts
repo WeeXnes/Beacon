@@ -53,6 +53,9 @@ const protectedEndpoints = [
 // All endpoints that are EXPLICITLY PUBLIC
 const publicEndpoints = [
   '/api/login',
+  '/api/downloadMods',
+  '/api/getModList',
+  '/download/some-server',
   '/login',
   '/favicon.ico',
   '/robots.txt'
