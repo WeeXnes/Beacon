@@ -40,6 +40,7 @@ const protectedEndpoints = [
   // System Settings
   '/api/getJavaVersions',
   '/api/setJavaVersions',
+  '/api/setPassword',
   '/api/discoverJavaVersions',
   
   // Velocity Proxy

@@ -86,8 +86,8 @@
           <div class="form-control">
             <label class="label"><span class="label-text font-bold">Update Access Key</span></label>
             <div class="flex gap-4">
-              <input type="password" placeholder="New Password" class="input input-bordered rounded-xl bg-base-100/50 flex-1" />
-              <button class="btn btn-primary rounded-xl px-8">Update</button>
+              <input v-model="newPassword" type="password" placeholder="New Password" class="input input-bordered rounded-xl bg-base-100/50 flex-1" />
+              <button @click="updatePassword" class="btn btn-primary rounded-xl px-8" :loading="updatingPassword">Update</button>
             </div>
           </div>
         </div>
@@ -239,6 +239,9 @@ const newTokenName = ref('');
 const generatedToken = ref('');
 const savingToken = ref(false);
 
+const newPassword = ref('');
+const updatingPassword = ref(false);
+
 const saving = ref(false);
 const savingDiscord = ref(false);
 const scanning = ref(false);
@@ -373,6 +376,36 @@ const saveDiscordConfig = async () => {
     console.error('Failed to save Discord config:', error);
   } finally {
     savingDiscord.value = false;
+  }
+};
+
+const updatePassword = async () => {
+  if (!newPassword.value) {
+    alert('Please enter a new password');
+    return;
+  }
+  
+  updatingPassword.value = true;
+  try {
+    const response = await $fetch<any>('/api/setPassword', {
+      method: 'POST',
+      body: { password: newPassword.value },
+      headers: {
+        Authorization: `Bearer ${useCookie('token').value}`
+      }
+    });
+    
+    if (response.status === 'success') {
+      alert('Password updated successfully!');
+      newPassword.value = '';
+    } else {
+      alert('Failed to update password: ' + response.message);
+    }
+  } catch (error) {
+    console.error('Failed to update password:', error);
+    alert('Failed to update password. Please check the console for details.');
+  } finally {
+    updatingPassword.value = false;
   }
 };
 

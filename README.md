@@ -67,9 +67,9 @@ npm run dev
 #### 🔐 Admin Password Setup
 By default, the admin password is `admin`.
 
-To change it, you need to edit the `settings.json` file located in `~/.mcservermanager/settings.json`. The password must be a **bcrypt hash**.
+To change it, you can use the **System Settings** page within the panel, or manually edit the `settings.json` file located in `~/.mcservermanager/settings.json`. 
 
-You can generate a bcrypt hash for your desired password using the included script:
+If editing manually, the password must be a **bcrypt hash**. You can generate a bcrypt hash for your desired password using the included script:
 ```bash
 npm run password_gen <your_password>
 ```
