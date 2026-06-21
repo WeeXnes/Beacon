@@ -6,6 +6,7 @@ const lastProcessedLine = new Map<string, number>();
 
 export default defineNitroPlugin((nitroApp) => {
     setInterval(async () => {
+        if (!environment.settings?.servers) return;
         for (const server of environment.settings.servers) {
             if (server.status !== 'online') continue;
 

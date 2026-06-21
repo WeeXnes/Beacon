@@ -136,6 +136,8 @@ export default defineNitroPlugin(async (nitroApp) => {
         return;
     }
 
+    if (!environment.settings?.servers) return;
+
     const discordEnabledServers = environment.settings.servers
         .filter(s => s.discordEnabled)
         .map(s => s.name);
