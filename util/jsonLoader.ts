@@ -18,6 +18,14 @@ export function loadJsonFile(){
             saveJsonFile();
         }
 
+        // Ensure onboarded state is initialized
+        if (environment.settings.onboarded === undefined) {
+            const isDefaultHash = environment.settings.password_hash === "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje";
+            const isEmptyHash = !environment.settings.password_hash;
+            environment.settings.onboarded = !isDefaultHash && !isEmptyHash;
+            saveJsonFile();
+        }
+
         // Ensure javaVersions exists for older config files
         if (!environment.settings.javaVersions) {
             environment.settings.javaVersions = [];
@@ -59,8 +67,9 @@ function createEmptySettingsIfNotExists() {
         let emptySettings: SettingsJsonFile = ({
             eula: true,
             servers:[],
-            password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje",
+            password_hash: "",
             jwt_secret: randomBytes(32).toString('hex'),
+            onboarded: false,
             javaVersions: [],
             discordConfig: {
                 enabled: false,

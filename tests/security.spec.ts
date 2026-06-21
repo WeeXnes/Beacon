@@ -54,10 +54,13 @@ const protectedEndpoints = [
 // All endpoints that are EXPLICITLY PUBLIC
 const publicEndpoints = [
   '/api/login',
+  '/api/onboardingStatus',
+  '/api/setup',
   '/api/downloadMods',
   '/api/getModList',
   '/download/some-server',
   '/login',
+  '/setup',
   '/favicon.ico',
   '/robots.txt'
 ]
@@ -65,6 +68,13 @@ const publicEndpoints = [
 describe('Security: Authentication Guard', () => {
   // Default Nuxt dev port is 3000
   const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000'
+
+  const isConnectionError = (e: any): boolean => {
+    return e.code === 'ECONNREFUSED' || 
+           e.cause?.code === 'ECONNREFUSED' || 
+           e.message?.includes('fetch failed') || 
+           e.message?.includes('ECONNREFUSED');
+  }
 
   describe('Protected Endpoints (Must return 401)', () => {
     protectedEndpoints.forEach((endpoint) => {
@@ -79,7 +89,7 @@ describe('Security: Authentication Guard', () => {
           expect(response.status).toBe(401)
         } catch (e: any) {
           // If server is not running, we skip but log a warning
-          if (e.code === 'ECONNREFUSED') {
+          if (isConnectionError(e)) {
             console.warn(`Test server not reachable at ${BASE_URL}. Start the server to run integration tests.`);
             return;
           }
@@ -98,7 +108,7 @@ describe('Security: Authentication Guard', () => {
           })
           expect(response.status).toBe(401)
         } catch (e: any) {
-          if (e.code === 'ECONNREFUSED') return;
+          if (isConnectionError(e)) return;
           throw e;
         }
       })
@@ -114,7 +124,7 @@ describe('Security: Authentication Guard', () => {
           // but they MUST NOT return 401
           expect(response.status).not.toBe(401)
         } catch (e: any) {
-          if (e.code === 'ECONNREFUSED') return;
+          if (isConnectionError(e)) return;
           throw e;
         }
       })
@@ -129,9 +139,50 @@ describe('Security: Authentication Guard', () => {
         })
         expect(response.status).toBe(401)
       } catch (e: any) {
-        if (e.code === 'ECONNREFUSED') return;
+        if (isConnectionError(e)) return;
         throw e;
       }
     })
   })
+
+  describe('Onboarding Endpoints Integration', () => {
+    it('returns onboarding status info', async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/onboardingStatus`);
+        expect(response.status).toBe(200);
+        const data = await response.json();
+        expect(data).toHaveProperty('onboarded');
+        expect(typeof data.onboarded).toBe('boolean');
+      } catch (e: any) {
+        if (isConnectionError(e)) return;
+        throw e;
+      }
+    });
+
+    it('rejects GET requests on setup endpoint with 405', async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/setup`, { method: 'GET' });
+        expect(response.status).toBe(405);
+      } catch (e: any) {
+        if (isConnectionError(e)) return;
+        throw e;
+      }
+    });
+
+    it('returns 403 or 400 for POST /api/setup based on state', async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/setup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: 'short' })
+        });
+        // If already onboarded, it returns 403 Forbidden.
+        // If not onboarded, it returns 400 Bad Request because the password is too short.
+        expect([400, 403]).toContain(response.status);
+      } catch (e: any) {
+        if (isConnectionError(e)) return;
+        throw e;
+      }
+    });
+  });
 })

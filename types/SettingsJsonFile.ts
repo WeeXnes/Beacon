@@ -23,6 +23,7 @@ export interface SettingsJsonFile {
     servers: MinecraftServer[];
     password_hash: string;
     jwt_secret?: string;
+    onboarded?: boolean;
     javaVersions: JavaVersion[];
     discordConfig?: DiscordConfig;
     panelUrl?: string;

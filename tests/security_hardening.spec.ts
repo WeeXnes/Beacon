@@ -141,5 +141,26 @@ describe('Security Hardening Logic Tests', () => {
     });
   });
 
+  describe('Onboarding Guard', () => {
+    const checkOnboardedState = (settings: any) => {
+      if (settings.onboarded === undefined) {
+        const isDefaultHash = settings.password_hash === "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje";
+        const isEmptyHash = !settings.password_hash;
+        return !isDefaultHash && !isEmptyHash;
+      }
+      return settings.onboarded;
+    };
 
+    it('returns false for new installations', () => {
+      expect(checkOnboardedState({ password_hash: '', onboarded: false })).toBe(false);
+    });
+
+    it('returns false for installations using the default hardcoded hash', () => {
+      expect(checkOnboardedState({ password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje" })).toBe(false);
+    });
+
+    it('returns true for completed onboardings', () => {
+      expect(checkOnboardedState({ password_hash: '$2a$12$someotherhash', onboarded: true })).toBe(true);
+    });
+  });
 });
