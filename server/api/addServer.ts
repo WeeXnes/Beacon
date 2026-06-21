@@ -5,6 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { logger } from '~/server/utils/logger';
 import { getAuditUser, writeAuditLog } from '../utils/audit';
+import * as os from 'node:os';
 
 export default defineEventHandler(async (event) => {
     const formData = await readMultipartFormData(event);
@@ -26,10 +27,13 @@ export default defineEventHandler(async (event) => {
             return { status: 'error', error: 'Invalid server name. Only alphanumeric characters, dashes, and underscores are allowed.' };
         }
 
-        if (typeof newServer.maxMemory !== 'number' || newServer.maxMemory <= 0 || newServer.maxMemory > 64) {
+        const systemTotalMemoryGB = Math.ceil(os.totalmem() / (1024 * 1024 * 1024));
+        const parsedMemory = Number(newServer.maxMemory);
+        if (isNaN(parsedMemory) || parsedMemory <= 0 || parsedMemory > systemTotalMemoryGB) {
             logger.error('SERVER', `Add failed: Invalid maxMemory value`);
-            return { status: 'error', error: 'Invalid memory allocation. Must be a positive integer between 1 and 64.' };
+            return { status: 'error', error: `Invalid memory allocation. Must be between 1 and ${systemTotalMemoryGB} GB.` };
         }
+        newServer.maxMemory = parsedMemory;
 
         const server = getServerByName(newServer.name);
         if (server) {

@@ -1,6 +1,13 @@
 <script setup lang="ts">
 const emit = defineEmits(['installed', 'close']);
 
+const { stats: systemStats, fetchStats } = useSystemStats();
+
+const maxSystemRam = computed(() => {
+  const total = parseFloat(systemStats.value?.memory?.total || '16');
+  return Math.ceil(total) || 16;
+});
+
 const step = ref(1);
 const loading = ref(false);
 const error = ref('');
@@ -144,6 +151,7 @@ const install = async () => {
 };
 
 onMounted(() => {
+  fetchStats();
   fetchJavaVersions();
 });
 </script>
@@ -254,7 +262,7 @@ onMounted(() => {
         <div class="form-control w-full">
           <label class="label"><span class="label-text font-bold">Memory (GB)</span></label>
           <div class="flex items-center gap-4">
-            <input type="range" min="1" max="16" v-model="maxMemory" class="range range-primary range-sm flex-1" />
+            <input type="range" min="1" :max="maxSystemRam" v-model.number="maxMemory" class="range range-primary range-sm flex-1" />
             <span class="w-12 text-center font-bold">{{ maxMemory }}G</span>
           </div>
         </div>
@@ -296,7 +304,7 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-4">
             <div class="form-control">
                 <label class="label"><span class="label-text font-bold">Memory (GB)</span></label>
-                <input type="number" v-model="maxMemory" class="input input-bordered rounded-xl bg-base-200/50 border-base-content/5" />
+                <input type="number" v-model.number="maxMemory" class="input input-bordered rounded-xl bg-base-200/50 border-base-content/5" />
             </div>
             <div class="form-control">
                 <label class="label"><span class="label-text font-bold">Java Runtime</span></label>

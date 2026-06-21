@@ -456,7 +456,7 @@
             <div class="form-control max-w-md">
               <label class="label"><span class="label-text font-bold">Max Allocated RAM (GB)</span></label>
               <div class="flex items-center gap-6">
-                <input type="range" min="1" max="32" v-model="localSettings.maxMemory" class="range range-primary range-sm flex-1" />
+                <input type="range" min="1" :max="maxSystemRam" v-model.number="localSettings.maxMemory" class="range range-primary range-sm flex-1" />
                 <span class="w-16 text-center font-bold bg-primary/10 text-primary py-1 rounded-lg">{{ localSettings.maxMemory }}GB</span>
               </div>
             </div>
@@ -604,6 +604,12 @@ const tabs = computed(() => {
   const remaining = project === 'velocity' ? [...baseTabs.slice(1, 2), ...baseTabs.slice(3)] : [...baseTabs.slice(1)]
   
   return [...tabs, ...remaining]
+})
+
+const { stats: systemStats, fetchStats: fetchSystemStats } = useSystemStats()
+const maxSystemRam = computed(() => {
+  const total = parseFloat(systemStats.value?.memory?.total || '32')
+  return Math.ceil(total) || 32
 })
 
 const javaVersions = ref<any[]>([])
@@ -922,6 +928,7 @@ const handleDelete = async () => {
 }
 
 onMounted(async () => {
+  fetchSystemStats()
   await getProperties()
   await fetchJavaVersions()
   await fetchBackups()

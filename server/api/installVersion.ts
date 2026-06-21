@@ -6,7 +6,7 @@ import * as path from "node:path";
 import { consola } from 'consola';
 import axios from 'axios';
 import { getAuditUser, writeAuditLog } from '../utils/audit';
-import { execa } from 'express-execa'; // Wait, it's just 'execa' in package.json
+import * as os from 'node:os';
 
 export default defineEventHandler(async (event) => {
     // We need 'execa' from the top level
@@ -34,8 +34,10 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: "Invalid version syntax." });
     }
 
-    if (maxMemory !== undefined && (typeof maxMemory !== 'number' || maxMemory <= 0 || maxMemory > 64)) {
-        throw createError({ statusCode: 400, statusMessage: "Invalid memory allocation. Must be between 1 and 64 GB." });
+    const systemTotalMemoryGB = Math.ceil(os.totalmem() / (1024 * 1024 * 1024));
+    const maxMemoryParsed = maxMemory !== undefined ? Number(maxMemory) : undefined;
+    if (maxMemoryParsed !== undefined && (isNaN(maxMemoryParsed) || maxMemoryParsed <= 0 || maxMemoryParsed > systemTotalMemoryGB)) {
+        throw createError({ statusCode: 400, statusMessage: `Invalid memory allocation. Must be between 1 and ${systemTotalMemoryGB} GB.` });
     }
 
     const existingServer = getServerByName(name);
