@@ -9,7 +9,7 @@ const loading = ref(false);
 const editingFile = ref<{ name: string; path: string; content: string } | null>(null);
 
 const fetchFiles = async () => {
-  loading.ref = true;
+  loading.value = true;
   try {
     const data = await $fetch('/api/listFiles', {
       method: 'POST',

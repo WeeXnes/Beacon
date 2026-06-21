@@ -17,7 +17,10 @@ export default defineEventHandler(async (event) => {
 
     // Security check: ensure backupPath is within the server's backup directory
     const serverBackupDir = path.resolve(environment.paths.backups, server.name);
-    if (!path.resolve(backupPath).startsWith(serverBackupDir)) {
+    const resolvedBackupPath = path.resolve(backupPath);
+    const relativePath = path.relative(serverBackupDir, resolvedBackupPath);
+    const isSafe = !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+    if (!isSafe) {
         throw createError({ statusCode: 403, statusMessage: "Forbidden" });
     }
 

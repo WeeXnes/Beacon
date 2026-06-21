@@ -13,10 +13,25 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 400, statusMessage: "Invalid proxy server" });
     }
 
-    // Validation: Ensure every enabled mapping has a subdomain
+    // Validation: Ensure every parameter is strictly formatted
+    if (baseDomain && !/^[a-zA-Z0-9.-]+$/.test(baseDomain)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid base domain format." });
+    }
+
     for (const m of mappings) {
-        if (m.isMapped && !m.subdomain) {
-            throw createError({ statusCode: 400, statusMessage: `Server ${m.serverName} requires a subdomain.` });
+        if (m.isMapped) {
+            if (!m.subdomain) {
+                throw createError({ statusCode: 400, statusMessage: `Server ${m.serverName} requires a subdomain.` });
+            }
+            if (!/^[a-zA-Z0-9_-]+$/.test(m.serverName)) {
+                throw createError({ statusCode: 400, statusMessage: "Invalid server name structure." });
+            }
+            if (!/^[a-zA-Z0-9_-]+$/.test(m.subdomain) && m.subdomain !== '@') {
+                throw createError({ statusCode: 400, statusMessage: `Invalid subdomain format for server ${m.serverName}.` });
+            }
+            if (!/^[a-zA-Z0-9.-]+:\d+$/.test(m.address)) {
+                throw createError({ statusCode: 400, statusMessage: `Invalid address format for server ${m.serverName}. Expected ip:port.` });
+            }
         }
     }
 

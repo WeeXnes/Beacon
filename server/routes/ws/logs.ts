@@ -1,5 +1,7 @@
 import { getLogsPath, getServerByName } from "~/types/MinecraftServer";
 import * as fs from 'fs';
+import jwt from 'jsonwebtoken';
+import { environment } from '~/core/globals';
 
 // Singleton to manage log watchers across all connections
 const watchers = new Map<string, {
@@ -14,18 +16,40 @@ export default defineWebSocketHandler({
         console.log(`[WS] 🔌 New connection attempt. Raw URL: "${peer.url}"`);
 
         let serverName: string | null = null;
+        let token: string | null = null;
         try {
             // Try different ways to parse the URL/Query
             const url = new URL(peer.url, 'http://localhost');
             serverName = url.searchParams.get('name');
+            token = url.searchParams.get('token');
             
             // Fallback: If Nitro/CrossWS only provides the query string
             if (!serverName && peer.url.includes('name=')) {
                 const match = peer.url.match(/name=([^&]+)/);
                 if (match) serverName = decodeURIComponent(match[1]);
             }
+            if (!token && peer.url.includes('token=')) {
+                const match = peer.url.match(/token=([^&]+)/);
+                if (match) token = decodeURIComponent(match[1]);
+            }
         } catch (e) {
             console.error(`[WS] ❌ URL Parse error:`, e);
+        }
+
+        if (!token) {
+            console.error(`[WS] ❌ Unauthorized WebSocket connection attempt (No Token)`);
+            peer.send(JSON.stringify({ type: 'error', data: 'Unauthorized' }));
+            peer.close();
+            return;
+        }
+
+        try {
+            jwt.verify(token, environment.jwt_globals.secret);
+        } catch (error: any) {
+            console.error(`[WS] ❌ Unauthorized WebSocket connection attempt (Invalid/Expired Token): ${error.message}`);
+            peer.send(JSON.stringify({ type: 'error', data: 'Unauthorized' }));
+            peer.close();
+            return;
         }
         
         if (!serverName) {

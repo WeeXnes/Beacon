@@ -5,6 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { consola } from 'consola';
 import axios from 'axios';
+import { getAuditUser, writeAuditLog } from '../utils/audit';
 import { execa } from 'express-execa'; // Wait, it's just 'execa' in package.json
 
 export default defineEventHandler(async (event) => {
@@ -13,9 +14,28 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody(event);
     const { name, version, project, maxMemory, javaVersionName } = body;
+    const user = getAuditUser(event);
 
     if (!name || !version || !project) {
         throw createError({ statusCode: 400, statusMessage: "Missing required fields" });
+    }
+
+    // Strict validation
+    if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid server name. Only alphanumeric, dashes, and underscores allowed." });
+    }
+
+    const allowedProjects = ['paper', 'folia', 'velocity', 'vanilla', 'fabric', 'forge'];
+    if (!allowedProjects.includes(project)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid project software specified." });
+    }
+
+    if (!/^[a-zA-Z0-9.-]+$/.test(version)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid version syntax." });
+    }
+
+    if (maxMemory !== undefined && (typeof maxMemory !== 'number' || maxMemory <= 0 || maxMemory > 64)) {
+        throw createError({ statusCode: 400, statusMessage: "Invalid memory allocation. Must be between 1 and 64 GB." });
     }
 
     const existingServer = getServerByName(name);
@@ -166,12 +186,14 @@ export default defineEventHandler(async (event) => {
         }
 
         consola.success(`[INSTALL] ✅ Server "${name}" installed successfully`);
+        writeAuditLog('INSTALL_VERSION', 'SUCCESS', user, `Installed server "${name}" (${project} ${version})`, event);
         return { success: true, message: `Server ${name} installed successfully.` };
     } catch (error: any) {
         consola.error(`[INSTALL] 🔥 Installation failed:`, error.message);
+        writeAuditLog('INSTALL_VERSION', 'FAILED', user, `Failed to install server "${name}": ${error.message}`, event);
         throw createError({
             statusCode: 500,
-            statusMessage: `Installation failed: ${error.message}`,
+            statusMessage: `Installation failed`,
         });
     }
 });

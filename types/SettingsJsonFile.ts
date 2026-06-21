@@ -22,6 +22,7 @@ export interface SettingsJsonFile {
     eula: boolean;
     servers: MinecraftServer[];
     password_hash: string;
+    jwt_secret?: string;
     javaVersions: JavaVersion[];
     discordConfig?: DiscordConfig;
     panelUrl?: string;

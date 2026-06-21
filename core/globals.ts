@@ -6,7 +6,9 @@ import {saveJsonFile} from "~/util/jsonLoader";
 
 export namespace environment{
     export const jwt_globals = {
-        secret: "tH5kunVlY4rDIv10Y6Hy0NoLKpH1uYtW",
+        get secret(): string {
+            return process.env.JWT_SECRET || (environment.settings && environment.settings.jwt_secret) || "tH5kunVlY4rDIv10Y6Hy0NoLKpH1uYtW";
+        }
     };
     export namespace paths{
         export let data: string = `${os.homedir()}/.mcservermanager`;

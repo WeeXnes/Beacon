@@ -43,8 +43,9 @@
             Java Runtime Management
           </h2>
           <div class="flex gap-2">
-            <button @click="discoverJava" class="btn btn-ghost btn-sm rounded-lg gap-2" :loading="scanning">
-              <Icon name="material-symbols:search-rounded" />
+            <button @click="discoverJava" class="btn btn-ghost btn-sm rounded-lg gap-2" :disabled="scanning">
+              <span v-if="scanning" class="loading loading-spinner loading-xs"></span>
+              <Icon v-else name="material-symbols:search-rounded" />
               Scan System
             </button>
             <button @click="addJavaVersion" class="btn btn-primary btn-sm rounded-lg gap-2">
@@ -69,7 +70,10 @@
             </div>
           </div>
           <div v-if="javaVersions.length > 0" class="mt-6 flex justify-end">
-            <button @click="saveJavaVersions" class="btn btn-primary btn-sm rounded-lg px-6" :loading="saving">Save Java Config</button>
+            <button @click="saveJavaVersions" class="btn btn-primary btn-sm rounded-lg px-6" :disabled="saving">
+              <span v-if="saving" class="loading loading-spinner loading-xs"></span>
+              Save Java Config
+            </button>
           </div>
         </div>
       </section>
@@ -87,7 +91,10 @@
             <label class="label"><span class="label-text font-bold">Update Access Key</span></label>
             <div class="flex gap-4">
               <input v-model="newPassword" type="password" placeholder="New Password" class="input input-bordered rounded-xl bg-base-100/50 flex-1" />
-              <button @click="updatePassword" class="btn btn-primary rounded-xl px-8" :loading="updatingPassword">Update</button>
+              <button @click="updatePassword" class="btn btn-primary rounded-xl px-8" :disabled="updatingPassword">
+                <span v-if="updatingPassword" class="loading loading-spinner loading-xs"></span>
+                Update
+              </button>
             </div>
           </div>
         </div>
@@ -129,7 +136,10 @@
             </div>
           </div>
           <div class="flex justify-end">
-            <button @click="saveDiscordConfig" class="btn btn-primary btn-sm rounded-lg px-6" :loading="savingDiscord">Save Discord Config</button>
+            <button @click="saveDiscordConfig" class="btn btn-primary btn-sm rounded-lg px-6" :disabled="savingDiscord">
+              <span v-if="savingDiscord" class="loading loading-spinner loading-xs"></span>
+              Save Discord Config
+            </button>
           </div>
         </div>
       </section>

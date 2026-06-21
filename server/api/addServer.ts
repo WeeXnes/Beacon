@@ -4,6 +4,7 @@ import {saveJsonFile} from "~/util/jsonLoader";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { logger } from '~/server/utils/logger';
+import { getAuditUser, writeAuditLog } from '../utils/audit';
 
 export default defineEventHandler(async (event) => {
     const formData = await readMultipartFormData(event);
@@ -18,19 +19,33 @@ export default defineEventHandler(async (event) => {
 
     try {
         const newServer = JSON.parse(newServerPart.data.toString());
-        const server = getServerByName(newServer.name);
 
+        // Strict input validation
+        if (!newServer.name || typeof newServer.name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(newServer.name)) {
+            logger.error('SERVER', `Add failed: Invalid server name "${newServer?.name}"`);
+            return { status: 'error', error: 'Invalid server name. Only alphanumeric characters, dashes, and underscores are allowed.' };
+        }
+
+        if (typeof newServer.maxMemory !== 'number' || newServer.maxMemory <= 0 || newServer.maxMemory > 64) {
+            logger.error('SERVER', `Add failed: Invalid maxMemory value`);
+            return { status: 'error', error: 'Invalid memory allocation. Must be a positive integer between 1 and 64.' };
+        }
+
+        const server = getServerByName(newServer.name);
         if (server) {
             logger.warn('SERVER', `Add skipped: Server "${newServer.name}" already exists`);
-            return { message: "Server with name " + newServer.name + " does already exist" };
+            return { status: 'error', error: "Server with name " + newServer.name + " already exists" };
         }
 
         // Security: Basic filename validation for the JAR
-        if (newServer.jarName.includes('/') || newServer.jarName.includes('..')) {
+        if (!newServer.jarName || typeof newServer.jarName !== 'string' || 
+            newServer.jarName.includes('/') || newServer.jarName.includes('..') || 
+            !newServer.jarName.endsWith('.jar') || !/^[a-zA-Z0-9_.-]+$/.test(newServer.jarName)) {
             logger.error('SERVER', `Blocked invalid JAR filename: "${newServer.jarName}"`);
-            return { status: 'error', error: 'Invalid JAR filename' };
+            return { status: 'error', error: 'Invalid JAR filename. Must end with .jar and contain no path traversal characters.' };
         }
 
+        const user = getAuditUser(event);
         const serverDir = path.resolve(environment.paths.servers + "/" + newServer.name);
         if (!fs.existsSync(serverDir)) {
             fs.mkdirSync(serverDir, { recursive: true });
@@ -43,9 +58,12 @@ export default defineEventHandler(async (event) => {
         fs.writeFileSync(jarPath, filePart.data);
 
         logger.success('SERVER', `New server "${newServer.name}" added successfully`);
+        writeAuditLog('ADD_SERVER', 'SUCCESS', user, `Added server "${newServer.name}" (jar: ${newServer.jarName})`, event);
         return { status: 'success' };
     } catch (error: any) {
         logger.error('SERVER', `Error adding server: ${error.message}`);
+        const user = getAuditUser(event);
+        writeAuditLog('ADD_SERVER', 'FAILED', user, `Failed to add server: ${error.message}`, event);
         return { status: 'error', error: error.message };
     }
 });

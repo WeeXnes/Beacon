@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import type { MinecraftServer } from "~/types/MinecraftServer";
 
-const { servers, loading, startServer, stopServer, fetchServers } = useServers()
+const { servers, loading, startServer, stopServer, fetchServers, startPolling, stopPolling } = useServers()
 const { stats: systemStats, fetchStats } = useSystemStats()
 
 const onlineCount = computed(() => servers.value.filter(s => s.status === 'online').length)
@@ -97,10 +97,12 @@ let statsInterval: NodeJS.Timeout
 onMounted(() => {
   fetchStats()
   statsInterval = setInterval(fetchStats, 5000)
+  startPolling(3000)
 })
 
 onUnmounted(() => {
   clearInterval(statsInterval)
+  stopPolling()
 })
 
 const handleInstalled = async () => {

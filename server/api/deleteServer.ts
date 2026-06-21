@@ -2,14 +2,17 @@ import {removeServerByName, saveJsonFile} from "~/util/jsonLoader";
 import * as fs from 'fs/promises';
 import {getServerByName, getServerDirectory} from "~/types/MinecraftServer";
 import { consola } from 'consola';
+import { getAuditUser, writeAuditLog } from '../utils/audit';
 
 export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const server_name: string = body.name
     const server = getServerByName(server_name);
+    const user = getAuditUser(event);
 
     if(!server) {
         consola.error(`[SERVER] ❌ Delete failed: Server "${server_name}" not found`);
+        writeAuditLog('DELETE_SERVER', 'FAILED', user, `Attempted to delete non-existent server "${server_name}"`, event);
         return  { message: "Server with name " + server_name + " does not exist" };
     }
 
@@ -27,9 +30,11 @@ export default defineEventHandler(async (event) => {
         saveJsonFile();
 
         consola.success(`[SERVER] ✅ Server "${server_name}" successfully deleted`);
+        writeAuditLog('DELETE_SERVER', 'SUCCESS', user, `Successfully deleted server "${server_name}"`, event);
         return { status: 'success' };
     } catch (error: any) {
         consola.error(`[SERVER] 🔥 Error deleting server "${server_name}":`, error.message);
-        return { status: 'error', error: error.message };
+        writeAuditLog('DELETE_SERVER', 'FAILED', user, `Failed to delete server "${server_name}": ${error.message}`, event);
+        return { status: 'error', error: 'Failed to delete server' };
     }
 });

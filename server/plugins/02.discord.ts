@@ -1,4 +1,5 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType, EmbedBuilder, TextChannel, Message } from 'discord.js';
+import * as discord from 'discord.js';
+import type { TextChannel, Message } from 'discord.js';
 import { environment } from '~/core/globals';
 import { consola } from 'consola';
 import { startMinecraftServer, stopMinecraftServer } from '../utils/serverControl';
@@ -7,7 +8,9 @@ import { saveJsonFile } from '~/util/jsonLoader';
 import * as fs from 'fs/promises';
 import { parse } from 'ini';
 
-export let discordClient: Client | null = null;
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, ActivityType, EmbedBuilder } = discord;
+
+export let discordClient: discord.Client | null = null;
 
 export function updateDiscordStatus() {
     if (!discordClient || !discordClient.user) return;

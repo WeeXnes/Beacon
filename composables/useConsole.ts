@@ -42,9 +42,10 @@ export const useConsole = (serverName: string) => {
         ws = null;
     }
 
+    const token = useCookie('token').value;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws/logs?name=${encodeURIComponent(serverName)}`;
+    const wsUrl = `${protocol}//${host}/ws/logs?name=${encodeURIComponent(serverName)}&token=${encodeURIComponent(token || '')}`;
     
     console.log(`[WS] Connecting to ${wsUrl}`);
     ws = new WebSocket(wsUrl);

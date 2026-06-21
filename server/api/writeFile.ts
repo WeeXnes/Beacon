@@ -17,7 +17,9 @@ export default defineEventHandler(async (event) => {
     const targetPath = path.resolve(baseDir, filePath);
 
     // Security check: ensure targetPath is within baseDir
-    if (!targetPath.startsWith(baseDir)) {
+    const relativePath = path.relative(baseDir, targetPath);
+    const isSafe = !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+    if (!isSafe) {
         consola.warn(`[FILES] 🛡️ Blocked path traversal attempt on write: Server "${name}", Path: "${filePath}"`);
         throw createError({ statusCode: 403, statusMessage: "Forbidden" });
     }

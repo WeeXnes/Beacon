@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import type {SettingsJsonFile} from "~/types/SettingsJsonFile";
 import type {MinecraftServer} from "~/types/MinecraftServer";
 import {getServerDirectory} from "~/types/MinecraftServer";
+import { randomBytes } from 'crypto';
 
 export function loadJsonFile(){
     try {
@@ -11,6 +12,12 @@ export function loadJsonFile(){
         let jsonStr = fs.readFileSync(environment.files.settings, 'utf-8')
         environment.settings = JSON.parse(jsonStr);
         
+        // Ensure jwt_secret exists for security hardening
+        if (!environment.settings.jwt_secret) {
+            environment.settings.jwt_secret = randomBytes(32).toString('hex');
+            saveJsonFile();
+        }
+
         // Ensure javaVersions exists for older config files
         if (!environment.settings.javaVersions) {
             environment.settings.javaVersions = [];
@@ -53,6 +60,7 @@ function createEmptySettingsIfNotExists() {
             eula: true,
             servers:[],
             password_hash: "$2a$12$E2uo9jptR/68BxMBx3HuzO18Cf8GWpzB9XBki98Dq8Xo.YPpOFCje",
+            jwt_secret: randomBytes(32).toString('hex'),
             javaVersions: [],
             discordConfig: {
                 enabled: false,
