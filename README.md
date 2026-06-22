@@ -1,5 +1,6 @@
 # 🌐 Minecraft Server Panel
 
+
 A sleek and modern Minecraft server manager built with [Nuxt](https://nuxt.com) for ease of use. Features include live console output via log polling, full server configuration, and intuitive control — all from your browser.
 
 ## 🚀 Features
