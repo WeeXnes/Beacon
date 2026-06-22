@@ -2,11 +2,6 @@
 
 A sleek and modern Minecraft server manager built with [Nuxt](https://nuxt.com) for ease of use. Features include live console output via log polling, full server configuration, and intuitive control — all from your browser.
 
-<p align="center">
-  <img src="./img/screen1.png" alt="Dashboard View" width="45%" />
-  <img src="./img/screen3.png" alt="Edit Server View" width="45%" />
-</p>
-
 ## 🚀 Features
 
 - 🖥️ **Manage Multiple Servers**  
