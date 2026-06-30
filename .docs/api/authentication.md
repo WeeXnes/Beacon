@@ -1,27 +1,27 @@
-# 🔒 Authentication API Reference
+# Authentication API Reference
 
 Beacon secures all standard dashboard communications using JSON Web Tokens (JWT) and offers a secondary, token-based authorization scheme for external automation scripts.
 
 ---
 
-## 🔑 Session Authentication Design
+## Session Authentication Design
 
 *   **Token Verification:** Standard requests to `/api/` verify credentials against a bearer token in the headers:
     `Authorization: Bearer <JWT_TOKEN>`
 *   **JWT Secret:** Configured dynamically. It utilizes `process.env.JWT_SECRET` or the fallback value stored in `settings.json`.
-*   **Token Expiry:** Standard tokens are signed for **30 days**.
+*   **Token Expiry:** Standard tokens are signed for 30 days.
 *   **External Gatekeeper:** Requests beginning with `/api/external/` are validated against API security tokens registered in the system settings rather than session JWTs.
 
 ---
 
-## 📡 Authentication Endpoints
+## Authentication Endpoints
 
 ### 1. User Login
 Validates admin credentials and issues a session token.
 
 *   **URL:** `/api/login`
 *   **Method:** `POST`
-*   **Authentication:** *None*
+*   **Authentication:** None
 *   **Request Body:**
     ```json
     {
@@ -86,7 +86,7 @@ Updates the password hash in settings.
 
 ---
 
-## 🌐 External API Token Endpoints
+## External API Token Endpoints
 
 ### 1. Get API Tokens
 Retrieves all registered external api token metadata.
@@ -146,7 +146,7 @@ Revokes access for a token.
 
 ---
 
-## 🌐 External Control
+## External Control
 
 ### 1. Control Server State External
 Trigger server power states using static API tokens from external environments (e.g. bash scripts or integration tools).

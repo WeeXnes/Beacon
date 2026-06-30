@@ -1,26 +1,26 @@
-# ⚙️ Setup & Installation Guide
+# Setup & Installation Guide
 
 This guide details the steps required to install, configure, run, and secure the Minecraft Server Panel (Beacon) in both development and production environments.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running the panel, ensure the hosting machine has the following tools installed:
 
-1.  **Node.js:** Version `16` or newer (LTS recommended).
+1.  **Node.js:** Version 16 or newer (LTS recommended).
 2.  **Java Runtime Environment (JRE):** Java 17 or newer (needed for modern Minecraft servers like 1.17+).
-3.  **Minecraft Server JAR:** A server jar file (e.g. `paper-1.20.6.jar` or a vanilla/forge jar).
+3.  **Minecraft Server JAR:** A server jar file (e.g. paper-1.20.6.jar or a vanilla/forge jar).
 4.  **PM2 (Optional but Recommended):** For production process management.
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://code.weexnes.dev/minecraft_server_manager
-    cd minecraft_server_manager
+    git clone https://code.weexnes.dev/Beacon.git
+    cd Beacon
     ```
 
 2.  **Install Dependencies:**
@@ -30,7 +30,7 @@ Before running the panel, ensure the hosting machine has the following tools ins
 
 ---
 
-## 💻 Running the Panel
+## Running the Panel
 
 ### Development Mode
 
@@ -70,7 +70,7 @@ To deploy the application for production:
 
 ---
 
-## 🔐 Admin Password Setup
+## Admin Password Setup
 
 By default, the admin password is set to `admin`. On first start, you will be prompted to go through the onboarding process if not configured, or you can log in directly.
 
@@ -82,7 +82,7 @@ You can change the admin password through two methods:
 Go to the **System Settings** page within the panel UI, enter your new password, and save.
 
 #### Method 2: Manually Editing settings.json
-The password is saved as a **bcrypt hash** inside `~/.mcservermanager/settings.json`. To generate a new hash:
+The password is saved as a bcrypt hash inside `~/.mcservermanager/settings.json`. To generate a new hash:
 
 1.  Execute the password generator script:
     ```bash
@@ -102,10 +102,10 @@ The password is saved as a **bcrypt hash** inside `~/.mcservermanager/settings.j
 
 ---
 
-## 🔒 Security Recommendations
+## Security Recommendations
 
 *   **Internal LAN Scope:** By default, this panel runs without TLS and is intended for local networks or home setups.
 *   **Public Access:** If exposing the panel to the public internet:
-    *   **Always use HTTPS:** Configure a reverse proxy like **Nginx** or **Caddy** to handle SSL certificates (e.g., Let's Encrypt).
+    *   **Always use HTTPS:** Configure a reverse proxy like Nginx or Caddy to handle SSL certificates (e.g., Let's Encrypt).
     *   **Strong Password:** Ensure you change the default password from `admin` to a strong, high-entropy password.
     *   **API Tokens:** Protect external HTTP calls by using the built-in API token management for webhook calls.

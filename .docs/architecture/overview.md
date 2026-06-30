@@ -1,25 +1,22 @@
-# 🏛️ Architecture Overview
+# Architecture Overview
 
 Beacon is a self-contained Nuxt 3 web application. It integrates a server-side control panel engine (running in the Node/Nitro process) with a reactive, real-time client dashboard interface.
 
 ---
 
-## 🗺️ System Architecture
+## System Architecture
 
-The following diagram illustrates the relationship between the client dashboard, the Nuxt/Nitro server backend, the persistent configuration file, and the child Minecraft server processes.
+The relationship and data flow between the system components operate as follows:
 
-```mermaid
-graph TD
-    Client[Web Browser Client] <-->|HTTP API / JWT| Backend[Nuxt/Nitro Server Backend]
-    Backend <-->|Read / Write| ConfigFile[settings.json Database]
-    Backend -->|Spawn / Interact| MCServers[Minecraft Server Subprocesses]
-    MCServers -->|Log Output| LogFiles[latest.log Files]
-    Backend -.->|FS Polling| LogFiles
-```
+*   **Client Dashboard to Backend:** The web browser client communicates with the Nuxt/Nitro server backend via HTTP APIs protected by JWT authentication.
+*   **Backend to Configuration Database:** The server backend reads and writes panel state changes directly to the `settings.json` flat-file configuration database.
+*   **Backend to Minecraft Servers:** The backend spawns and interacts with the Minecraft server instances as child processes.
+*   **Minecraft Servers to Log Files:** Active server processes output console logs to `latest.log` or `server.log` files on the local filesystem.
+*   **Backend to Log Files:** The backend monitors active servers by polling the log files on the filesystem.
 
 ---
 
-## 💾 Persistent Configuration Database
+## Persistent Configuration Database
 
 Rather than using a heavy relational database, Beacon utilizes a single, flat JSON file located at `~/.mcservermanager/settings.json`.
 
@@ -35,7 +32,7 @@ All data is stored inside the local host's home folder:
 
 ---
 
-## ⚙️ Process Model & Lifecycle
+## Process Model & Lifecycle
 
 Beacon manages Minecraft servers as child processes of the main Nitro server.
 
@@ -45,12 +42,12 @@ When starting a server, the backend calls the `execa` package to execute the con
 ### Persistent Server Tracking (PID Re-attachment)
 1.  When a server starts, its Process ID (`pid`) is saved to `~/.mcservermanager/settings.json`.
 2.  If the panel is stopped or restarted, the actual Minecraft servers continue to run in the background as separate system processes.
-3.  Upon restarting, the panel running `01.init.ts` scans the `settings.json` list of servers. For any server stored with a active `pid`, the panel sends signal `0` (`process.kill(server.pid, 0)`) to check if the process is still running.
+3.  Upon restarting, the panel running `01.init.ts` scans the `settings.json` list of servers. For any server stored with an active `pid`, the panel sends signal `0` (`process.kill(server.pid, 0)`) to check if the process is still running.
 4.  If the process is active, it restores the server status to `online` in the UI. If it has exited, it gracefully resets the status to `offline` and clears the `pid`.
 
 ---
 
-## 🔒 Authentication & Route Security
+## Authentication & Route Security
 
 API endpoints are protected by the `server/middleware/auth.ts` middleware.
 

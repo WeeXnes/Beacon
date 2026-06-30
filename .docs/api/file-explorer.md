@@ -1,10 +1,10 @@
-# 📂 File Explorer API Reference
+# File Explorer API Reference
 
 These endpoints are used by the dashboard's File Manager UI to inspect, view, write, and delete files inside active Minecraft server directories.
 
 ---
 
-## 🛡️ Directory Safety & Security
+## Directory Safety & Security
 
 All file operations perform a strict security validation to prevent path traversal vulnerability attacks (e.g. attempting to read `/etc/passwd` using relative paths containing `..` or absolute paths):
 1.  Resolves the base directory for the server: `~/.mcservermanager/servers/<server_name>`.
@@ -14,7 +14,7 @@ All file operations perform a strict security validation to prevent path travers
 
 ---
 
-## 📡 File Operations Endpoints
+## File Operations Endpoints
 
 ### 1. List Directory Contents
 Lists files and subdirectories located inside a specific server directory.

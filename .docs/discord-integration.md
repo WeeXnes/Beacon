@@ -1,10 +1,10 @@
-# 🤖 Discord Bot Integration
+# Discord Bot Integration
 
-Beacon features a built-in Discord bot integration using the `discord.js` library, enabling server administrators to monitor status changes and control Minecraft instances directly from Discord.
+Beacon features a built-in Discord bot integration using the discord.js library, enabling server administrators to monitor status changes and control Minecraft instances directly from Discord.
 
 ---
 
-## 🛠️ Bot Configuration Setup
+## Bot Configuration Setup
 
 To activate the Discord integration, go to **System Settings > Discord Config** in the panel UI, toggle "Enabled", and configure the credentials:
 1.  **Bot Token (`token`):** The private token generated under the "Bot" section in the Discord Developer Portal.
@@ -15,7 +15,7 @@ Once saved, the panel backend initializes the client connection and refreshes th
 
 ---
 
-## 🕹️ Discord Slash Commands
+## Discord Slash Commands
 
 Beacon registers the following guild commands on startup:
 
@@ -31,44 +31,40 @@ Stops a target Minecraft server instance.
 
 ---
 
-## 📡 Live Status Embeds
+## Live Status Embeds
 
-If a server profile has **Discord Status Notification** enabled and is mapped to a valid Discord Channel ID, the bot publishes real-time embedded status cards during power transitions:
+The server status transitions are mapped as follows:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Starting: Start command issued
-    Starting --> Online: Server boot complete (edits existing message)
-    Online --> Offline: Stop command / crash (sends new message)
-    Offline --> [*]
-```
+1.  **Starting State:** Triggered when the start command is issued. The bot publishes the initial status message and saves the message ID.
+2.  **Online State:** Triggered once the server boot is complete. The bot edits the existing "Starting" status message to transition it to "Online" (avoiding channel clutter).
+3.  **Offline State:** Triggered when the server is stopped or crashes. The bot sends a new status message indicating the server has stopped and clears the message ID tracking.
 
 ### 1. Starting State (`starting`)
-*   **Embed Color:** Yellow (`#f1c40f`)
+*   **Embed Color:** Yellow (#f1c40f)
 *   **Embed Title:** `⏳ <server_name> is starting...`
 *   **Fields:** Version info (if enabled), connection address (if enabled), and clean MOTD lines.
 *   **Tracking:** The bot saves the sent message ID (`lastStatusMessageId`) to settings.json.
 
 ### 2. Online State (`online`)
-*   **Embed Color:** Green (`#2ecc71` or custom color)
+*   **Embed Color:** Green (#2ecc71 or custom color)
 *   **Embed Title:** `✅ <server_name> is online`
 *   **Optimization (Anti-Spam):** If a `lastStatusMessageId` exists, the bot **edits** the starting message into the online message, keeping the channel clean instead of spamming separate messages.
 *   **Fields:** Shows connection address, Minecraft version, custom description, and public modpacks download URLs (if enabled).
 
 ### 3. Stopped State (`stop`)
-*   **Embed Color:** Red (`#e74c3c`)
+*   **Embed Color:** Red (#e74c3c)
 *   **Embed Title:** `🛑 <server_name> has stopped`
 *   **Fields:** Displays timestamp details.
 *   **Tracking:** Clears the saved `lastStatusMessageId` from settings.json.
 
 ---
 
-## ⚙️ Embed Customization Settings
+## Embed Customization Settings
 
 Each server can be customized individually in its **Settings** tab:
-*   **Show Version (`showVersion`):** Includes the engine version (e.g. `1.20.6`).
+*   **Show Version (`showVersion`):** Includes the engine version (e.g. 1.20.6).
 *   **Show Connection Address (`showConnectionAddress`):** Embeds the host server IP/Domain and port.
-*   **Show MOTD (`showMotd`):** Reads the server's local MOTD configuration, strips Minecraft styling color codes (e.g. `§a`, `§l`), and includes it in the embed.
+*   **Show MOTD (`showMotd`):** Reads the server's local MOTD configuration, strips Minecraft styling color codes (e.g. §a, §l), and includes it in the embed.
 *   **Show Download Link (`showDownloadLink`):** Appends a link directing players to the panel's public `/download/<server_name>` route to get mod files.
 *   **Custom Caption (`customCaption`):** Places custom message text under the description field.
 *   **Embed Color (`embedColor`):** Sets the hexadecimal border color of the active online card.

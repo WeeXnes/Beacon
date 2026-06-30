@@ -1,10 +1,10 @@
-# 🖥️ Frontend Components & State
+# Frontend Components & State
 
-Beacon's frontend dashboard is a single-page application built on top of **Nuxt 3**. It organizes page views, UI components, and sharing states via custom composables.
+Beacon's frontend dashboard is a single-page application built on top of Nuxt 3. It organizes page views, UI components, and sharing states via custom composables.
 
 ---
 
-## 📄 Page Views
+## Page Views
 
 The dashboard view routes correspond to files inside the `pages/` directory:
 
@@ -33,7 +33,7 @@ The dashboard view routes correspond to files inside the `pages/` directory:
 
 ---
 
-## 📦 UI Components
+## UI Components
 
 Reusable Vue components reside in the `components/` directory:
 
@@ -50,7 +50,7 @@ Reusable Vue components reside in the `components/` directory:
 
 ---
 
-## 🧪 Composables (Client State)
+## Composables (Client State)
 
 Client-side state management functions are defined inside `composables/`:
 

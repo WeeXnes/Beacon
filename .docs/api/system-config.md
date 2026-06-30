@@ -1,17 +1,17 @@
-# ⚙️ System & Config API Reference
+# System & Config API Reference
 
 These endpoints are used to administer overall system properties, Discord bot credentials, Java version runtimes, onboarding states, and Velocity proxy routing configurations.
 
 ---
 
-## 🚦 System Configuration Endpoints
+## System Configuration Endpoints
 
 ### 1. Panel Onboarding (First Launch Setup)
 Registers the initial EULA agreement state and admin credentials.
 
 *   **URL:** `/api/setup`
 *   **Method:** `POST`
-*   **Authentication:** *None*
+*   **Authentication:** None
 *   **Request Body:**
     ```json
     {
@@ -32,7 +32,7 @@ Queries if the admin password and configurations have already been initialized.
 
 *   **URL:** `/api/onboardingStatus`
 *   **Method:** `GET`
-*   **Authentication:** *None*
+*   **Authentication:** None
 *   **Response (200 OK):**
     ```json
     {
@@ -82,7 +82,7 @@ Writes modified configuration properties string or TOML schema back to files.
 
 ---
 
-## 🤖 Discord Configuration
+## Discord Configuration
 
 ### 1. Get Discord Credentials
 Retrieves the active Discord application credentials.
@@ -124,7 +124,7 @@ Saves the bot credentials and registers/re-runs the Discord bot plugin integrati
 
 ---
 
-## ☕ Java Versions Management
+## Java Versions Management
 
 ### 1. Get Java Versions
 Returns list of registered Java versions.
@@ -186,7 +186,7 @@ Overrides the list of custom registered Java paths.
 
 ---
 
-## 🌐 Velocity Proxy Routing (Proxy Mapping)
+## Velocity Proxy Routing (Proxy Mapping)
 
 ### 1. Get Proxy Routing Configurations
 Lists servers mapped under a specific Velocity proxy.

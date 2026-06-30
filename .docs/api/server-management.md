@@ -1,10 +1,10 @@
-# 🕹️ Server Management API Reference
+# Server Management API Reference
 
 These endpoints handle Minecraft server instance control, registration, status tracking, and resource stats.
 
 ---
 
-## 🚦 Server Power Controls
+## Server Power Controls
 
 ### 1. Start Server
 Spawns the Java subprocess for a specific Minecraft server instance.
@@ -69,7 +69,7 @@ Sends a custom text command directly to a running server process (`stdin`).
 
 ---
 
-## 📊 Status & Information
+## Status & Information
 
 ### 1. Get All Servers
 Returns a list of all registered Minecraft server instances.
@@ -115,7 +115,7 @@ Queries CPU and Memory utilization of the running Minecraft process ID (`pid`).
 
 ---
 
-## ➕ Server Registration
+## Server Registration
 
 ### 1. Register & Upload Server (Add Server)
 Registers a new Minecraft server profile and uploads the initial executable JAR.

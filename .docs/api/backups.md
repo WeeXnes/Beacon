@@ -1,18 +1,18 @@
-# 📦 Backups API Reference
+# Backups API Reference
 
 These endpoints let you query, create, restore, and delete zipped backups of Minecraft server files.
 
 ---
 
-## 💾 Storage & Packaging Format
+## Storage & Packaging Format
 
 *   **Format:** Backups are packaged as `.tar.gz` gzip tarball archives.
 *   **Directory:** Saved in `~/.mcservermanager/backups/<server_name>/`.
-*   **Safety Constraints:** Path resolving maps are checked to block directory traversal escapes. Restorations require that the target server instance is `offline` to prevent files lock issues and directory corruption.
+*   **Safety Constraints:** Path resolving maps are checked to block directory traversal escapes. Restorations require that the target server instance is offline to prevent files lock issues and directory corruption.
 
 ---
 
-## 📡 Backup Endpoints
+## Backup Endpoints
 
 ### 1. List Server Backups
 Retrieves an array of backups for a specific server sorted chronologically (newest first).
