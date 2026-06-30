@@ -1,0 +1,17 @@
+{
+  "Introduction": "introduction.md",
+  "Setup Guide": "setup-guide.md",
+  "Architecture": {
+    "Overview": "architecture/overview.md",
+    "Backend Plugins": "architecture/backend-plugins.md",
+    "Frontend Components": "architecture/frontend-components.md"
+  },
+  "API Reference": {
+    "Authentication": "api/authentication.md",
+    "Server Management": "api/server-management.md",
+    "File Explorer": "api/file-explorer.md",
+    "Backups": "api/backups.md",
+    "System & Config": "api/system-config.md"
+  },
+  "Discord Integration": "discord-integration.md"
+}
