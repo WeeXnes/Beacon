@@ -58,13 +58,41 @@ export default defineEventHandler(async (event) => {
         let jarName = '';
 
         if (project === 'paper' || project === 'folia' || project === 'velocity') {
-            const buildInfo = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}`);
-            const latestBuild = buildInfo.builds[buildInfo.builds.length - 1];
-            const buildDetail = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}`);
-            downloadName = buildDetail.downloads.application.name;
-            downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${downloadName}`;
-            jarName = downloadName;
-        } else if (project === 'vanilla') {
+			const headers = {
+				'User-Agent': useRuntimeConfig().app.name
+			};
+
+			const builds = await $fetch<any>(
+				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds`,
+				{ headers }
+			);
+
+			// Prefer the latest STABLE build, otherwise fall back to the newest build.
+			const latestBuild =
+				builds.builds
+					.filter((b: any) => b.channel === 'STABLE')
+					.at(-1) ??
+				builds.builds.at(-1);
+
+			if (!latestBuild) {
+				throw new Error(`No builds found for ${project} ${version}`);
+			}
+
+			const build = await $fetch<any>(
+				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${latestBuild.id}`,
+				{ headers }
+			);
+
+			const download = build.downloads['server:default'];
+
+			if (!download) {
+				throw new Error(`No server download found for ${project} ${version}`);
+			}
+
+			downloadUrl = download.url;
+			downloadName = download.name;
+			jarName = download.name;
+		} else if (project === 'vanilla') {
             const manifest = await $fetch<any>('https://launchermeta.mojang.com/mc/game/version_manifest.json');
             const versionEntry = manifest.versions.find((v: any) => v.id === version);
             if (!versionEntry) throw new Error(`Vanilla version ${version} not found`);
@@ -107,11 +135,14 @@ export default defineEventHandler(async (event) => {
         consola.info(`[INSTALL] 📥 Downloading ${downloadName} from ${downloadUrl}...`);
         const downloadPath = path.join(serverDir, downloadName);
         
-        const response = await axios({
-            method: 'get',
-            url: downloadUrl,
-            responseType: 'stream'
-        });
+		const response = await axios({
+			method: 'get',
+			url: downloadUrl,
+			responseType: 'stream',
+			headers: {
+				'User-Agent': useRuntimeConfig().app.name
+			}
+		});
 
         const writer = fs.createWriteStream(downloadPath);
         response.data.pipe(writer);
