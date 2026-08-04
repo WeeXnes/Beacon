@@ -6,13 +6,19 @@ export default defineEventHandler(async (event) => {
 
     try {
         if (project === 'paper' || project === 'folia' || project === 'velocity') {
-            consola.info(`[API] Fetching versions from ${project}...`);
-            const projectData = await $fetch<any>(`https://api.papermc.io/v2/projects/${project}`);
-            return {
-                project: project,
-                versions: projectData.versions.reverse()
-            };
-        } 
+    		consola.info(`[API] Fetching versions from ${project}...`);
+
+    		const projectData = await $fetch<any>(`https://fill.papermc.io/v3/projects/${project}`, {headers: {'User-Agent': useRuntimeConfig().app.name}});
+
+    		const versions = Array.isArray(projectData.versions)
+        		? projectData.versions
+       			: Object.values(projectData.versions).flat();
+
+    		return {
+        		project,
+       			versions: versions.reverse()
+    		};
+		}
         
         if (project === 'vanilla') {
             consola.info('[API] Fetching versions from Mojang (Vanilla)...');
