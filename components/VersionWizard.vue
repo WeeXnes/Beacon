@@ -15,6 +15,9 @@ const error = ref('');
 const project = ref('paper');
 const versions = ref<string[]>([]);
 const selectedVersion = ref('');
+const builds = ref<{ id: string; name: string }[]>([]);
+const selectedBuild = ref<string | undefined>(undefined);
+const loadingBuilds = ref(false);
 const serverName = ref('');
 const maxMemory = ref(2);
 const javaVersionName = ref<string | undefined>(undefined);
@@ -32,6 +35,32 @@ const fetchJavaVersions = async () => {
   }
 };
 
+const fetchBuilds = async (p: string, v: string) => {
+  if (!v || p === 'vanilla') {
+    builds.value = [];
+    selectedBuild.value = undefined;
+    return;
+  }
+  loadingBuilds.value = true;
+  try {
+    const data = await $fetch<{ builds: { id: string; name: string }[] }>(`/api/getBuilds?project=${p}&version=${v}`, {
+      headers: { Authorization: `Bearer ${useCookie('token').value}` }
+    });
+    builds.value = data.builds || [];
+    if (builds.value.length > 0) {
+      selectedBuild.value = builds.value[0].id;
+    } else {
+      selectedBuild.value = undefined;
+    }
+  } catch (e) {
+    console.error('Failed to fetch builds:', e);
+    builds.value = [];
+    selectedBuild.value = undefined;
+  } finally {
+    loadingBuilds.value = false;
+  }
+};
+
 const selectProject = async (p: string) => {
   project.value = p;
   loading.value = true;
@@ -43,6 +72,7 @@ const selectProject = async (p: string) => {
     versions.value = data.versions;
     if (versions.value.length > 0) {
       selectedVersion.value = versions.value[0];
+      await fetchBuilds(p, versions.value[0]);
     }
     step.value = 2; // Step 2 is Config
   } catch (e: any) {
@@ -52,9 +82,11 @@ const selectProject = async (p: string) => {
   }
 };
 
-watch(selectedVersion, (newVer) => {
+watch(selectedVersion, async (newVer) => {
   if (!newVer) return;
   
+  fetchBuilds(project.value, newVer);
+
   // Versions 1.16.5 and older generally work best with Java 8
   // 1.17+ requires Java 16 or 17+
   const isOlder = newVer.startsWith('1.8') || newVer.startsWith('1.7') || 
@@ -136,6 +168,7 @@ const install = async () => {
       body: {
         name: serverName.value,
         version: selectedVersion.value,
+        build: selectedBuild.value,
         project: project.value,
         maxMemory: maxMemory.value,
         javaVersionName: javaVersionName.value
@@ -256,6 +289,21 @@ onMounted(() => {
           </div>
           <select v-model="selectedVersion" class="select select-bordered rounded-xl bg-base-200/50 border-base-content/5">
             <option v-for="v in versions" :key="v" :value="v">{{ v }}</option>
+          </select>
+        </div>
+
+        <!-- Build / Loader Version Selector -->
+        <div v-if="project !== 'vanilla'" class="form-control w-full">
+          <label class="label">
+            <span class="label-text font-bold">
+              {{ project === 'forge' ? 'Forge Loader Version' : (project === 'fabric' ? 'Fabric Loader Version' : 'Build') }}
+            </span>
+          </label>
+          <div v-if="loadingBuilds" class="flex items-center gap-2 py-2 px-1 text-xs opacity-60">
+            <span class="loading loading-spinner loading-xs"></span> Fetching versions...
+          </div>
+          <select v-else v-model="selectedBuild" class="select select-bordered rounded-xl bg-base-200/50 border-base-content/5">
+            <option v-for="b in builds" :key="b.id" :value="b.id">{{ b.name }}</option>
           </select>
         </div>
 

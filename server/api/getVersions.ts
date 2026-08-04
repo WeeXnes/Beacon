@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     		return {
         		project,
-       			versions: versions.reverse()
+       			versions
     		};
 		}
         

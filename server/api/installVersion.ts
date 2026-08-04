@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     const { execa } = await import('execa');
 
     const body = await readBody(event);
-    const { name, version, project, maxMemory, javaVersionName } = body;
+    const { name, version, build: buildParam, project, maxMemory, javaVersionName } = body;
     const user = getAuditUser(event);
 
     if (!name || !version || !project) {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        consola.info(`[INSTALL] 🛠️ Starting installation for "${name}" (${project} ${version})`);
+        consola.info(`[INSTALL] 🛠️ Starting installation for "${name}" (${project} ${version}${buildParam ? ` #${buildParam}` : ''})`);
 
         const serverDir = path.resolve(environment.paths.servers, name);
         if (!fs.existsSync(serverDir)) {
@@ -62,31 +62,38 @@ export default defineEventHandler(async (event) => {
 				'User-Agent': useRuntimeConfig().app.name
 			};
 
-			const builds = await $fetch<any>(
-				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds`,
-				{ headers }
-			);
+			let targetBuildId = buildParam;
 
-			// Prefer the latest STABLE build, otherwise fall back to the newest build.
-			const latestBuild =
-				builds.builds
-					.filter((b: any) => b.channel === 'STABLE')
-					.at(-1) ??
-				builds.builds.at(-1);
+			if (!targetBuildId) {
+				const buildsResponse = await $fetch<any>(
+					`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds`,
+					{ headers }
+				);
 
-			if (!latestBuild) {
-				throw new Error(`No builds found for ${project} ${version}`);
+				const builds = Array.isArray(buildsResponse)
+					? buildsResponse
+					: (buildsResponse.builds || []);
+
+				if (!builds || builds.length === 0) {
+					throw new Error(`No builds found for ${project} ${version}`);
+				}
+
+				// Prefer the latest STABLE build, otherwise fall back to the first build in array.
+				const latestBuild =
+					builds.find((b: any) => b.channel === 'STABLE') ?? builds[0];
+
+				targetBuildId = latestBuild.id;
 			}
 
 			const build = await $fetch<any>(
-				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${latestBuild.id}`,
+				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${targetBuildId}`,
 				{ headers }
 			);
 
-			const download = build.downloads['server:default'];
+			const download = build.downloads?.['server:default'];
 
 			if (!download) {
-				throw new Error(`No server download found for ${project} ${version}`);
+				throw new Error(`No server download found for ${project} ${version} build ${targetBuildId}`);
 			}
 
 			downloadUrl = download.url;
@@ -104,29 +111,34 @@ export default defineEventHandler(async (event) => {
             downloadName = `vanilla-server-${version}.jar`;
             jarName = downloadName;
         } else if (project === 'fabric') {
-            const loaders = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/loader');
+            let loaderVersion = buildParam;
+            if (!loaderVersion) {
+                const loaders = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/loader');
+                loaderVersion = loaders[0].version; // Latest loader
+            }
             const installers = await $fetch<any[]>('https://meta.fabricmc.net/v2/versions/installer');
-            const loaderVersion = loaders[0].version; // Latest loader
             const installerVersion = installers[0].version; // Latest installer
             
             downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/${loaderVersion}/${installerVersion}/server/jar`;
             downloadName = `fabric-server-launcher.jar`;
             jarName = downloadName;
         } else if (project === 'forge') {
-            const promos = await $fetch<any>('https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json');
-            let forgeVersion = promos.promos[`${version}-recommended`] || promos.promos[`${version}-latest`];
-            
+            let forgeVersion = buildParam;
+
             if (!forgeVersion) {
-                // Fallback to searching promos for this MC version if exact key not found
-                const keys = Object.keys(promos.promos).filter(k => k.startsWith(version));
-                forgeVersion = promos.promos[keys[0]];
+                const promos = await $fetch<any>('https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json');
+                forgeVersion = promos.promos[`${version}-recommended`] || promos.promos[`${version}-latest`];
+                
+                if (!forgeVersion) {
+                    const keys = Object.keys(promos.promos).filter(k => k.startsWith(version));
+                    forgeVersion = promos.promos[keys[0]];
+                }
             }
 
             if (!forgeVersion) throw new Error(`No Forge version found for MC ${version}`);
 
             const fullVersion = `${version}-${forgeVersion}`;
             downloadName = `forge-${fullVersion}-installer.jar`;
-            // URL format: https://maven.minecraftforge.net/net/minecraftforge/forge/{fullVersion}/forge-{fullVersion}-installer.jar
             downloadUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${fullVersion}/forge-${fullVersion}-installer.jar`;
             jarName = ''; // Will be determined after installation
         }
