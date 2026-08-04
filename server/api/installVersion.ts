@@ -62,38 +62,39 @@ export default defineEventHandler(async (event) => {
 				'User-Agent': useRuntimeConfig().app.name
 			};
 
-			let targetBuildId = buildParam;
-
-			if (!targetBuildId) {
-				const buildsResponse = await $fetch<any>(
-					`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds`,
-					{ headers }
-				);
-
-				const builds = Array.isArray(buildsResponse)
-					? buildsResponse
-					: (buildsResponse.builds || []);
-
-				if (!builds || builds.length === 0) {
-					throw new Error(`No builds found for ${project} ${version}`);
-				}
-
-				// Prefer the latest STABLE build, otherwise fall back to the first build in array.
-				const latestBuild =
-					builds.find((b: any) => b.channel === 'STABLE') ?? builds[0];
-
-				targetBuildId = latestBuild.id;
-			}
-
-			const build = await $fetch<any>(
-				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${targetBuildId}`,
+			const buildsResponse = await $fetch<any>(
+				`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds`,
 				{ headers }
 			);
 
-			const download = build.downloads?.['server:default'];
+			const builds = Array.isArray(buildsResponse)
+				? buildsResponse
+				: (Array.isArray(buildsResponse?.builds) ? buildsResponse.builds : []);
+
+			if (!builds || builds.length === 0) {
+				throw new Error(`No builds found for ${project} ${version}`);
+			}
+
+			let targetBuildObj: any = null;
+			if (buildParam) {
+				targetBuildObj = builds.find((b: any) => String(b.id) === String(buildParam));
+			}
+			if (!targetBuildObj) {
+				targetBuildObj = builds.find((b: any) => b.channel === 'STABLE') ?? builds[0];
+			}
+
+			let download = targetBuildObj.downloads?.['server:default'];
 
 			if (!download) {
-				throw new Error(`No server download found for ${project} ${version} build ${targetBuildId}`);
+				const build = await $fetch<any>(
+					`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${targetBuildObj.id}`,
+					{ headers }
+				);
+				download = build.downloads?.['server:default'];
+			}
+
+			if (!download) {
+				throw new Error(`No server download found for ${project} ${version} build ${targetBuildObj.id}`);
 			}
 
 			downloadUrl = download.url;
