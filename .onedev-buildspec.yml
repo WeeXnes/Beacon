@@ -1,6 +1,7 @@
-version: 53
+version: 59
 jobs:
 - name: Get Version (private)
+  executeInSandbox: false
   jobExecutor: Builder
   steps:
   - type: CheckoutStep
@@ -65,12 +66,13 @@ jobs:
     userMatch: anyone
   - type: PullRequestUpdateTrigger
   retryCondition: never
-  maxRetries: 3
+  maxAttempts: 4
   retryDelay: 30
   includeUpstreamWhenRebuild: false
   includeDownstreamWhenRebuild: false
   timeout: 14400
 - name: Deploy (private)
+  executeInSandbox: false
   jobExecutor: Minecraft
   steps:
   - type: CommandStep
@@ -93,7 +95,7 @@ jobs:
     userMatch: anyone
   - type: PullRequestUpdateTrigger
   retryCondition: never
-  maxRetries: 3
+  maxAttempts: 4
   retryDelay: 30
   includeUpstreamWhenRebuild: false
   includeDownstreamWhenRebuild: false
